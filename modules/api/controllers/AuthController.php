@@ -49,7 +49,6 @@ class AuthController extends Controller{
                     $utilizador = new Utilizador();
                     $utilizador->nome = $user->username;
                     $utilizador->user_id = $user->id;
-                    $utilizador->email = $user->email;
                     $utilizador->save();
                 }
 

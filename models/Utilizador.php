@@ -10,8 +10,7 @@ use Yii;
  *
  * @property int $id
  * @property int|null $idLab
- * @property string|null $nome
- * @property string|null $email
+ * @property string $nome
  * @property string|null $telefone
  * @property string|null $endereco
  * @property string|null $cod_postal
@@ -39,13 +38,11 @@ class Utilizador extends \yii\db\ActiveRecord
     {
         return [
             [['idLab', 'nif', 'user_id'], 'integer'],
-            [['user_id'], 'required'],
+            [['nome', 'user_id'], 'required'],
             [['nome'], 'string', 'max' => 55],
-            [['email'], 'string', 'max' => 60],
             [['telefone'], 'string', 'max' => 20],
             [['endereco'], 'string', 'max' => 100],
             [['cod_postal'], 'string', 'max' => 15],
-            [['user_id'], 'unique'],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
             [['idLab'], 'exist', 'skipOnError' => true, 'targetClass' => Laboratorio::class, 'targetAttribute' => ['idLab' => 'id']],
         ];
@@ -60,7 +57,6 @@ class Utilizador extends \yii\db\ActiveRecord
             'id' => 'ID',
             'idLab' => 'Id Lab',
             'nome' => 'Nome',
-            'email' => 'Email',
             'telefone' => 'Telefone',
             'endereco' => 'Endereco',
             'cod_postal' => 'Cod Postal',
