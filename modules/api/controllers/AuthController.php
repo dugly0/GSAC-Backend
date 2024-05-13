@@ -47,8 +47,13 @@ class AuthController extends Controller{
                 if ($user->save()) {
                     // Insere ou atualiza a tabela "Utilizador" com base nos dados do usuário
                     $utilizador = new Utilizador();
-                    $utilizador->nome = $user->username;
+                    $utilizador->nome = "jao robso";
                     $utilizador->user_id = $user->id;
+                    $utilizador->nif = "123456789";
+                    $utilizador->cod_postal = "1234567";
+                    $utilizador->endereco = "rua tal etc tal 2";
+                    $utilizador->telefone = "999 999 999";
+                    $utilizador->idLab = 1;
                     $utilizador->save();
                 }
 
