@@ -22,16 +22,16 @@ class BaseRestController extends ActiveController{
 
       $behaviors['access'] = [
          'class' => AccessControl::class,
-         'rules' => [
+         'rules' => [ //add autorizações ao admin
              [
                  'actions' => ['index', 'create', 'update', 'delete', 'view'],
                  'allow' => true,
                  'roles' => ['admin'],
             ],
             [
-               'actions' => ['index', 'view'],
+               'actions' => ['index', 'view','orcamento-por-utilizador-id'],
                'allow' => true,
-               'roles' => ['laboratorio', '@'],
+               'roles' => ['@'],
              ]
          ]
       ];
