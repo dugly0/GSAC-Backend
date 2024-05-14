@@ -53,7 +53,7 @@ $config = [
                  'controller' => [
                     'api/estadoorcamento',
                     'api/laboratorio',
-                    'api/cliente/',
+                    'api/cliente',
                     'api/servico',
                     'api/servicoorcamento',
                     'api/utilizador',
