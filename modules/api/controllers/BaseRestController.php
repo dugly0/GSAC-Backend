@@ -9,7 +9,7 @@ use yii\rest\ActiveController;
 
 class BaseRestController extends ActiveController{
 
-    public function behaviors()
+   public function behaviors()
    {
       $behaviors = parent::behaviors();
 
@@ -24,15 +24,15 @@ class BaseRestController extends ActiveController{
          'class' => AccessControl::class,
          'rules' => [
              [
-                 'actions' => ['index', 'create', 'update', 'delete', 'view'],
-                 'allow' => true,
-                 'roles' => ['admin'],
+               'actions' => ['index', 'create', 'update', 'delete', 'view'],
+               'allow' => true,
+               'roles' => ['admin'],
             ],
             [
                'actions' => ['index', 'view'],
                'allow' => true,
-               'roles' => ['laboratorio'],
-             ]
+               'roles' => ['lab'],
+            ]
          ]
       ];
 

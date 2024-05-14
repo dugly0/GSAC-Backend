@@ -9,6 +9,8 @@ use amnah\yii2\user\models\UserToken;
 use app\models\Utilizador;
 use Yii;
 use yii\rest\Controller;
+use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
 class AuthController extends Controller{
