@@ -31,7 +31,7 @@ class BaseRestController extends ActiveController{
             [
                'actions' => ['index', 'view'],
                'allow' => true,
-               'roles' => ['laboratorio'],
+               'roles' => ['laboratorio', '@'],
              ]
          ]
       ];
