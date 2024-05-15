@@ -47,11 +47,10 @@ class AuthController extends Controller{
                 $user->save();
 
                 if ($user->save()) {
-                    // Insere ou atualiza a tabela "Utilizador" com base nos dados do usuário
                     $utilizador = new Utilizador();
-                    $utilizador->load($post, ''); // Carrega os dados recebidos
-                    $utilizador->user_id = $user->id; // Define o ID do usuário
-                    $utilizador->save(); // Salva o registro do utilizador
+                    $utilizador->load($post, ''); 
+                    $utilizador->user_id = $user->id; 
+                    $utilizador->save(); 
                 }
 
                 $this->afterRegister($user);
