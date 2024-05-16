@@ -30,15 +30,14 @@ class OrcamentoController extends BaseRestController
         $token = str_replace('Bearer ', '', $authorizationHeader);
         //busca o utilizador com o token fornecido
         $user = User::find()->where(['access_token' => $token])->one();
-        if($utilizador_id == $user->id){
+        if ($utilizador_id == $user->id) {
             $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador_id])->all();
 
             if (empty($orcamentos)) {
                 throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador_id.");
             }
             return $orcamentos;
-        }
-        else{
+        } else {
             throw new \yii\web\NotFoundHttpException("Voce não tem permissão para ver os orçamentos de outro utilizador.");
         }
     }
@@ -62,5 +61,12 @@ class OrcamentoController extends BaseRestController
         } else {
             throw new BadRequestHttpException("Falha ao criar o orçamento.");
         }
+    }
+
+    // endPoint para listar todos os orçamentos
+    public function actionIndex()
+    {
+        $orcamentos = Orcamento::find()->all();
+        return $orcamentos;
     }
 }

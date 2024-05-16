@@ -59,6 +59,7 @@ $config = [
                     'api/utilizador',
                     'api/estado',
                     'api/orcamento',
+                    'api/orcamento' => 'api/orcamento/index',
                 ],
                 'pluralize' => false
                 ],
