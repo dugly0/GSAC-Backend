@@ -13,34 +13,19 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
-class UserController extends ActiveController{
+class UserController extends BaseRestController{
 
     public $modelClass = User::class;
     
-    public function behaviors()
+    public function actions()
     {
-    $behaviors = parent::behaviors();
+        $actions = parent::actions();
 
-    $behaviors['authentication'] = [
-        'class' => CompositeAuth::class,
-        'authMethods' => [
-            HttpBearerAuth::class
-        ]
-      ];
+        unset($actions['delete']);
 
-      $behaviors['access'] = [
-         'class' => AccessControl::class,
-         'rules' => [
-             [
-               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role', 'deletee'],
-               'allow' => true,
-               'roles' => ['admin'],
-            ],
-         ]
-      ];
-
-      return $behaviors;
+        return $actions;
     }
+    
     public function actionSetRole($id, $role_id)
 {
     $user = $this->findModel($id);
@@ -56,7 +41,7 @@ class UserController extends ActiveController{
     }
 }
 
-public function actionDeletee($id)
+public function actionDelete($id)
 {
     $transaction = Yii::$app->db->beginTransaction();
 

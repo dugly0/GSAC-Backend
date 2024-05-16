@@ -24,14 +24,14 @@ class BaseRestController extends ActiveController{
          'class' => AccessControl::class,
          'rules' => [
              [
-               'actions' => ['index', 'create', 'update', 'delete', 'view'],
+               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role'],
                'allow' => true,
                'roles' => ['admin'],
             ],
             [
                'actions' => ['index', 'view'],
                'allow' => true,
-               'roles' => ['lab'],
+               'roles' => ['@'],
             ]
          ]
       ];
