@@ -53,11 +53,12 @@ $config = [
                  'controller' => [
                     'api/estadoorcamento',
                     'api/laboratorio',
-                    'api/orcamento',
+                    'api/cliente',
                     'api/servico',
                     'api/servicoorcamento',
                     'api/utilizador',
-                    'api/estado'
+                    'api/estado',
+                    'api/orcamento',
                 ],
                 'pluralize' => false
                 ],

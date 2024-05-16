@@ -114,5 +114,5 @@ class Orcamento extends \yii\db\ActiveRecord
     public function getUtilizador()
     {
         return $this->hasOne(Utilizador::class, ['id' => 'utilizador_id']);
-    }
+    }  
 }
