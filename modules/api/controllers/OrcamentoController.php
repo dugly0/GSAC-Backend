@@ -6,6 +6,8 @@ use Yii;
 use yii\rest\ActiveController;
 use app\models\Orcamento;
 use app\models\User;
+use app\models\EstadoOrcamento;
+use app\models\Estado;
 
 class OrcamentoController extends BaseRestController
 {
@@ -65,6 +67,13 @@ class OrcamentoController extends BaseRestController
         }
     }
     public function actionFindEstadoByIdOrcamento($idOrcamento){
-
+        $idEstado = EstadoOrcamento::find()->where(['orcamento_id' => $idOrcamento])->one();
+        if (empty($idEstado)) {
+            throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
+        }
+        $estado = Estado::find()->where(['id' => $idEstado -> estado_id])->one();
+        
+        return  $estado->estado;
+             
     }
 }
