@@ -46,23 +46,26 @@ $config = [
         
         'urlManager' => [
             'enablePrettyUrl' => true,
-            // 'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                ['class' => 'yii\rest\UrlRule',
-                 'controller' => [
-                    'api/estadoorcamento',
-                    'api/laboratorio',
-                    'api/cliente',
-                    'api/servico',
-                    'api/servicoorcamento',
-                    'api/utilizador',
-                    'api/estado',
-                    'api/orcamento',
-                    'api/orcamento' => 'api/orcamento/index',
+                // Rotas RESTful para os controladores
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => [
+                        'api/estadoorcamento',
+                        'api/laboratorio',
+                        'api/cliente',
+                        'api/servico',
+                        'api/servicoorcamento',
+                        'api/utilizador',
+                        'api/estado',
+                        'api/orcamento',
+                        'api/orcamento' => 'api/orcamento/index',
+                    ],
+                    'pluralize' => false
                 ],
-                'pluralize' => false
-                ],
+                // Rota personalizada para a atualização de orçamento
+                'PUT api/orcamento/update/<id:\d+>' => 'api/orcamento/update',
             ],
         ],
         

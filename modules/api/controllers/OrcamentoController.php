@@ -6,10 +6,18 @@ use Yii;
 use yii\rest\ActiveController;
 use app\models\Orcamento;
 use app\models\User;
+use yii\filters\VerbFilter;
+use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
+use yii\web\Response;
+use yii\base\Exception;
+use yii\web\BadRequestHttpException;
 
 class OrcamentoController extends BaseRestController
 {
     public $modelClass = 'app\models\Orcamento';
+
+
 
     public function actions()
     {
@@ -68,5 +76,23 @@ class OrcamentoController extends BaseRestController
     {
         $orcamentos = Orcamento::find()->all();
         return $orcamentos;
+    }
+
+    // endPoint para atualizar orcamentos
+    public function actionUpdate($id)
+    {
+        $model = Orcamento::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
+
+        // Carregar os dados do corpo da requisição para o modelo
+        $model->load(Yii::$app->request->getBodyParams(), '');
+
+        if ($model->save()) {
+            return $model; 
+        } else {
+            return $model->getErrors();
+        }
     }
 }
