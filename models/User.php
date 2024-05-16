@@ -128,4 +128,12 @@ class User extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Utilizador::class, ['user_id' => 'id']);
     }
+    public static function findByAccessToken($token)
+    {
+        // Cortar a string para obter apenas o token
+        $token = str_replace('Bearer ', '', $token);
+
+        // Buscar o utilizador com o token fornecido
+        return static::find()->where(['access_token' => $token])->one();
+    }
 }

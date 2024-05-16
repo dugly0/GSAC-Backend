@@ -24,12 +24,13 @@ class OrcamentoController extends BaseRestController
     // Endpoint personalizado para retornar o orçamento com base no utilizador_id
     public function actionOrcamentoPorUtilizadorId($utilizador_id)
     {
-        // Obter o token da autorização dos cabeçalhos da solicitação
+        // // Obter o token da autorização dos cabeçalhos da solicitação
         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-        //corta a string para obter apenas o token
-        $token = str_replace('Bearer ', '', $authorizationHeader);
-        //busca o utilizador com o token fornecido
-        $user = User::find()->where(['access_token' => $token])->one();
+        $user = User::findByAccessToken($authorizationHeader);
+        // //corta a string para obter apenas o token
+        // $token = str_replace('Bearer ', '', $authorizationHeader);
+        // //busca o utilizador com o token fornecido
+        // $user = User::find()->where(['access_token' => $token])->one();
         if($utilizador_id == $user->id){
             $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador_id])->all();
 
