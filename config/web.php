@@ -57,7 +57,8 @@ $config = [
                     'api/servico',
                     'api/servicoorcamento',
                     'api/utilizador',
-                    'api/estado'
+                    'api/estado',
+                    'api/user',
                 ],
                 'pluralize' => false
                 ],
