@@ -8,6 +8,10 @@ use app\models\Orcamento;
 use app\models\User;
 use app\models\EstadoOrcamento;
 use app\models\Estado;
+use app\models\Utilizador;
+use yii\web\BadRequestHttpException;
+use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 
 class OrcamentoController extends BaseRestController
 {
@@ -76,4 +80,29 @@ class OrcamentoController extends BaseRestController
         return  $estado->estado;
              
     }
+
+ //joão
+    public function actionOrcamentoPorLaboratorio()
+    {
+        // Obter o token de autorização dos cabeçalhos da requisição
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        $user = User::findByAccessToken($authorizationHeader);
+
+        if (!$user) {
+        throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+        }
+
+        // Encontrar o utilizador correspondente ao usuário autenticado
+        $utilizador = Utilizador::findOne(['user_id' => $user->id]);
+
+        if (!$utilizador || !$utilizador->idLab) {
+        throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
+        }
+
+      
+    }
+
+
+    
+
 }
