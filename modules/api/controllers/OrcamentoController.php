@@ -31,7 +31,7 @@ class OrcamentoController extends BaseRestController
         // $token = str_replace('Bearer ', '', $authorizationHeader);
         // //busca o utilizador com o token fornecido
         // $user = User::find()->where(['access_token' => $token])->one();
-        if($utilizador_id == $user->id){
+        if($utilizador_id == $user->id || $user->role_id == "1"){
             $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador_id])->all();
 
             if (empty($orcamentos)) {
@@ -63,5 +63,8 @@ class OrcamentoController extends BaseRestController
         } else {
             throw new BadRequestHttpException("Falha ao criar o orçamento.");
         }
+    }
+    public function actionFindEstadoByIdOrcamento($idOrcamento){
+
     }
 }
