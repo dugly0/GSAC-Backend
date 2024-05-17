@@ -115,4 +115,6 @@ class Orcamento extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Utilizador::class, ['id' => 'utilizador_id']);
     }  
+// João
+      
 }

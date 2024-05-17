@@ -81,7 +81,7 @@ class OrcamentoController extends BaseRestController
              
     }
 
- //joão
+    //João
     public function actionOrcamentoPorLaboratorio()
     {
         // Obter o token de autorização dos cabeçalhos da requisição
@@ -100,16 +100,21 @@ class OrcamentoController extends BaseRestController
         }
 
         // Buscar os orçamentos do laboratório do utilizador
-        $orcamentos = Orcamento::find()->where(['laboratorio_id' => $utilizador->idLab])->all();
+        $orcamentos = Orcamento::find()
+        ->where(['laboratorio_id' => $utilizador->idLab])
+        ->all();
 
         if (empty($orcamentos)) {
         throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
         }
 
+        
         return $orcamentos;
 
       
     }
+    //gustavo
+    
 
 
     
