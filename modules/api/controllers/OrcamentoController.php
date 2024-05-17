@@ -76,4 +76,31 @@ class OrcamentoController extends BaseRestController
         return  $estado->estado;
              
     }
+    public function actionUpdateEstadoByIdOrcamento($idOrcamento, $idEstado)
+{
+    $estadoOrcamento = EstadoOrcamento::find()->where(['orcamento_id' => $idOrcamento])->one();
+
+    if (empty($estadoOrcamento)) {
+        throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
+    }
+
+    if ($idEstado != 1 && $idEstado != 2) {
+        throw new \yii\web\BadRequestHttpException("O estado deve ser Aceito (1) ou Recusado (2).");
+    }
+
+    $estadoOrcamento->estado_id = $idEstado;
+    $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+
+    if ($estadoOrcamento->save()) {
+        $estado = Estado::find()->where(['id' => $idEstado])->one();
+        return $estado->estado;
+    } else {
+        return [
+            'success' => false,
+            'message' => 'Falha ao atualizar o estado.',
+            'errors' => $estadoOrcamento->errors,
+        ];
+    }
+}
+
 }
