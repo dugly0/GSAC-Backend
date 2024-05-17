@@ -114,5 +114,19 @@ class Orcamento extends \yii\db\ActiveRecord
     public function getUtilizador()
     {
         return $this->hasOne(Utilizador::class, ['id' => 'utilizador_id']);
+    }  
+// João
+    public function getEstadoOrcamentosAtivos()
+    {
+        return $this->hasMany(EstadoOrcamento::className(), ['orcamento_id' => 'id'])
+                    ->andOnCondition(['estado_orcamento.estado_id' => 1]); 
     }
+
+    public static function findOrcamentosComEstadoAtivo() 
+    {
+        return self::find()
+            ->joinWith('estadoOrcamentosAtivos')
+            ->where(['estado_orcamento.estado_id' => 1]);
+    }     
+
 }
