@@ -122,4 +122,11 @@ class Orcamento extends \yii\db\ActiveRecord
                     ->andOnCondition(['estado_orcamento.estado_id' => 1]); 
     }
 
+    public static function findOrcamentosComEstadoAtivo() 
+    {
+        return self::find()
+            ->joinWith('estadoOrcamentosAtivos')
+            ->where(['estado_orcamento.estado_id' => 1]);
+    }     
+
 }
