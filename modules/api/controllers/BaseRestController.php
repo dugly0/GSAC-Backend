@@ -9,7 +9,7 @@ use yii\rest\ActiveController;
 
 class BaseRestController extends ActiveController{
 
-    public function behaviors()
+   public function behaviors()
    {
       $behaviors = parent::behaviors();
 
@@ -24,12 +24,12 @@ class BaseRestController extends ActiveController{
          'class' => AccessControl::class,
          'rules' => [ //add autorizações ao admin
              [
-                 'actions' => ['index', 'create', 'update', 'delete', 'view'],
-                 'allow' => true,
-                 'roles' => ['admin'],
+               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role'],
+               'allow' => true,
+               'roles' => ['admin'],
             ],
             [
-               'actions' => ['index', 'view','orcamento-por-utilizador-id', 'find-estado-by-id-orcamento', 'update-estado-by-id-orcamento'],
+               'actions' => ['index', 'view','orcamento-por-utilizador-id', 'find-estado-by-id-orcamento', 'orcamento-por-laboratorio', 'orcamento-por-laboratorio-com-estado-aceito', 'update-estado-by-id-orcamento'],
                'allow' => true,
                'roles' => ['@'],
             ],

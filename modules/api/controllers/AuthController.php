@@ -9,6 +9,8 @@ use amnah\yii2\user\models\UserToken;
 use app\models\Utilizador;
 use Yii;
 use yii\rest\Controller;
+use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
 class AuthController extends Controller{
@@ -45,16 +47,10 @@ class AuthController extends Controller{
                 $user->save();
 
                 if ($user->save()) {
-                    // Insere ou atualiza a tabela "Utilizador" com base nos dados do usuário
                     $utilizador = new Utilizador();
-                    $utilizador->nome = "jao robso";
-                    $utilizador->user_id = $user->id;
-                    $utilizador->nif = "123456789";
-                    $utilizador->cod_postal = "1234567";
-                    $utilizador->endereco = "rua tal etc tal 2";
-                    $utilizador->telefone = "999 999 999";
-                    $utilizador->idLab = 1;
-                    $utilizador->save();
+                    $utilizador->load($post, ''); 
+                    $utilizador->user_id = $user->id; 
+                    $utilizador->save(); 
                 }
 
                 $this->afterRegister($user);
