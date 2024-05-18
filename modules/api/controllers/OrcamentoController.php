@@ -12,10 +12,18 @@ use app\models\Utilizador;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
+use yii\filters\VerbFilter;
+use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
+use yii\web\Response;
+use yii\base\Exception;
+use yii\web\BadRequestHttpException;
 
 class OrcamentoController extends BaseRestController
 {
     public $modelClass = 'app\models\Orcamento';
+
+
 
     public function actions()
     {
@@ -38,14 +46,18 @@ class OrcamentoController extends BaseRestController
         // //busca o utilizador com o token fornecido
         // $user = User::find()->where(['access_token' => $token])->one();
         if($utilizador_id == $user->id || $user->role_id == "1"){
+        //corta a string para obter apenas o token
+        $token = str_replace('Bearer ', '', $authorizationHeader);
+        //busca o utilizador com o token fornecido
+        $user = User::find()->where(['access_token' => $token])->one();
+        if ($utilizador_id == $user->id) {
             $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador_id])->all();
 
             if (empty($orcamentos)) {
                 throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador_id.");
             }
             return $orcamentos;
-        }
-        else{
+        } else {
             throw new \yii\web\NotFoundHttpException("Voce não tem permissão para ver os orçamentos de outro utilizador.");
         }
     }
@@ -182,4 +194,29 @@ class OrcamentoController extends BaseRestController
     }
 }
 
+
+    // endPoint para listar todos os orçamentos
+    public function actionIndex()
+    {
+        $orcamentos = Orcamento::find()->all();
+        return $orcamentos;
+    }
+
+    // endPoint para atualizar orcamentos
+    public function actionUpdate($id)
+    {
+        $model = Orcamento::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
+
+        // Carregar os dados do corpo da requisição para o modelo
+        $model->load(Yii::$app->request->getBodyParams(), '');
+
+        if ($model->save()) {
+            return $model; 
+        } else {
+            return $model->getErrors();
+        }
+    }
 }

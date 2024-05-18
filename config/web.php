@@ -46,7 +46,6 @@ $config = [
         
         'urlManager' => [
             'enablePrettyUrl' => true,
-            // 'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
                 ['class' => 'yii\rest\UrlRule',
@@ -62,7 +61,9 @@ $config = [
                     'api/orcamento',
                 ],
                 'pluralize' => false
-                ],
+            ],
+                // Rota personalizada para a atualização de orçamento
+                'PUT api/orcamento/update/<id:\d+>' => 'api/orcamento/update',
             ],
         ],
         
