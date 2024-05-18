@@ -13,18 +13,12 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use yii\web\NotFoundHttpException;
-use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 use yii\base\Exception;
-use yii\web\BadRequestHttpException;
 
 class OrcamentoController extends BaseRestController
 {
     public $modelClass = 'app\models\Orcamento';
-
-
-
     public function actions()
     {
         $actions = parent::actions();
@@ -34,7 +28,6 @@ class OrcamentoController extends BaseRestController
 
         return $actions;
     }
-
     // Endpoint personalizado para retornar o orçamento com base no utilizador_id
     public function actionOrcamentoPorUtilizadorId($utilizador_id)
     {
@@ -50,16 +43,17 @@ class OrcamentoController extends BaseRestController
         $token = str_replace('Bearer ', '', $authorizationHeader);
         //busca o utilizador com o token fornecido
         $user = User::find()->where(['access_token' => $token])->one();
-        if ($utilizador_id == $user->id) {
+        if ($utilizador_id == $user->id) 
+        {
             $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador_id])->all();
-
             if (empty($orcamentos)) {
                 throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador_id.");
             }
-            return $orcamentos;
-        } else {
-            throw new \yii\web\NotFoundHttpException("Voce não tem permissão para ver os orçamentos de outro utilizador.");
-        }
+                return $orcamentos;
+            } else {
+                throw new \yii\web\NotFoundHttpException("Voce não tem permissão para ver os orçamentos de outro utilizador.");
+            }
+        }        
     }
     public function actionCreate()
     {
