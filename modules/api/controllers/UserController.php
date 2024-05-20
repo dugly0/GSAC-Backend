@@ -5,6 +5,7 @@ namespace app\modules\api\controllers;
 use amnah\yii2\user\models\User;
 use app\models\Utilizador;
 use Yii;
+use yii\filters\AccessControl;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
@@ -12,6 +13,24 @@ use yii\web\ServerErrorHttpException;
 class UserController extends BaseRestController{
 
     public $modelClass = User::class;
+
+    public function behaviors()
+   {
+      $behaviors = parent::behaviors();
+
+      $behaviors['access'] = [
+         'class' => AccessControl::class,
+         'rules' => [
+             [
+               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role'],
+               'allow' => true,
+               'roles' => ['admin'],
+            ],
+         ]
+      ];
+
+      return $behaviors;
+   }
     
     public function actions()
     {
