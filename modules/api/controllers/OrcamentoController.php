@@ -8,6 +8,8 @@ use app\models\Orcamento;
 use app\models\User;
 use app\models\EstadoOrcamento;
 use app\models\Estado;
+use app\models\Servico;
+use app\models\ServicoOrcamento;
 use app\models\Utilizador;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
@@ -33,27 +35,16 @@ class OrcamentoController extends BaseRestController
     {
         // // Obter o token da autorização dos cabeçalhos da solicitação
         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-        $user = User::findByAccessToken($authorizationHeader);
-        // //corta a string para obter apenas o token
-        // $token = str_replace('Bearer ', '', $authorizationHeader);
-        // //busca o utilizador com o token fornecido
-        // $user = User::find()->where(['access_token' => $token])->one();
+        $user = User::findByAccessToken($authorizationHeader);       
         if($utilizador_id == $user->id || $user->role_id == "1"){
-        //corta a string para obter apenas o token
-        $token = str_replace('Bearer ', '', $authorizationHeader);
-        //busca o utilizador com o token fornecido
-        $user = User::find()->where(['access_token' => $token])->one();
-        if ($utilizador_id == $user->id) 
-        {
             $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador_id])->all();
             if (empty($orcamentos)) {
                 throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador_id.");
             }
-                return $orcamentos;
-            } else {
-                throw new \yii\web\NotFoundHttpException("Voce não tem permissão para ver os orçamentos de outro utilizador.");
-            }
-        }        
+            return $orcamentos;
+        } 
+        throw new \yii\web\NotFoundHttpException("Voce não tem permissão para ver os orçamentos de outro utilizador.");
+           
     }
     public function actionCreate()
     {
