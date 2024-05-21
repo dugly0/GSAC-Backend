@@ -69,15 +69,34 @@ class OrcamentoController extends BaseRestController
             throw new BadRequestHttpException("Falha ao criar o orçamento.");
         }
     }
-    public function actionFindEstadoByIdOrcamento($idOrcamento){
-        $idEstado = EstadoOrcamento::find()->where(['orcamento_id' => $idOrcamento])->one();
-        if (empty($idEstado)) {
+    public function actionFindEstadoByIdOrcamento($idOrcamento)
+{
+    // Encontrar o último estado do orçamento com base na data de criação
+    $ultimoEstadoOrcamento = EstadoOrcamento::find()
+        ->where(['orcamento_id' => $idOrcamento])
+        ->orderBy(['id' => SORT_DESC]) // Assumindo que o campo 'data' registra a data de alteração
+        ->one();
+
+    if (empty($ultimoEstadoOrcamento)) {
+        throw new \yii\web\NotFoundHttpException("Não foram encontrados estados para esse orçamento com ID $idOrcamento.");
+    }
+
+    // Encontrar o estado correspondente ao último estado do orçamento
+    $estado = Estado::find()->where(['id' => $ultimoEstadoOrcamento->estado_id])->one();
+
+    if (empty($estado)) {
+        throw new \yii\web\NotFoundHttpException("Estado não encontrado para o estado_id {$ultimoEstadoOrcamento->estado_id}.");
+    }
+
+    return $estado->estado;
+}
+
+    public function actionFindServicoByIdOrcamento($idOrcamento){
+        $servicos = ServicoOrcamento::find()->where(['orcamento_id' => $idOrcamento])->all();
+        if (empty($servicos)) {
             throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
-        }
-        $estado = Estado::find()->where(['id' => $idEstado -> estado_id])->one();
-        
-        return  $estado->estado;
-             
+        }        
+        return $servicos;
     }
 
     //João
@@ -156,30 +175,40 @@ class OrcamentoController extends BaseRestController
 
     public function actionUpdateEstadoByIdOrcamento($idOrcamento, $idEstado)
 {
-    $estadoOrcamento = EstadoOrcamento::find()->where(['orcamento_id' => $idOrcamento])->one();
-
-    if (empty($estadoOrcamento)) {
+    // Verificar se o orçamento existe
+    $orcamento = Orcamento::find()->where(['id' => $idOrcamento])->one();
+    if (empty($orcamento)) {
         throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
     }
 
+    // Verificar se o estado é Aceito (1) ou Recusado (2)
     if ($idEstado != 1 && $idEstado != 2) {
         throw new \yii\web\BadRequestHttpException("O estado deve ser Aceito (1) ou Recusado (2).");
     }
 
+    // Criar uma nova instância de EstadoOrcamento
+    $estadoOrcamento = new EstadoOrcamento();
+    $estadoOrcamento->orcamento_id = $idOrcamento;
     $estadoOrcamento->estado_id = $idEstado;
     $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
 
+    // Salvar o novo estado do orçamento
     if ($estadoOrcamento->save()) {
         $estado = Estado::find()->where(['id' => $idEstado])->one();
-        return $estado->estado;
+        return [
+            'success' => true,
+            'message' => 'Estado do orçamento salvo com sucesso.',
+            'estado' => $estado->estado,
+        ];
     } else {
         return [
             'success' => false,
-            'message' => 'Falha ao atualizar o estado.',
+            'message' => 'Falha ao salvar o estado.',
             'errors' => $estadoOrcamento->errors,
         ];
     }
 }
+
 
 
     // endPoint para listar todos os orçamentos
