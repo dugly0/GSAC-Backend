@@ -146,6 +146,23 @@ class OrcamentoController extends BaseRestController
         }
 
         // Buscar os orçamentos do laboratório do utilizador
+        $orcamentos = Orcamento::find()
+        ->select('orcamento.*')
+        ->where(['laboratorio_id' => $utilizador->idLab])
+        ->joinWith([
+            'estadoOrcamentos' => function ($query) {
+                $query->andWhere(['estado_orcamento.estado_id' => 1]); // Filtra pelo estado_id = 1 (aceito)
+            },
+            'estadoOrcamentos.estado' // Carrega os estados relacionados aos estados do orçamento
+        ])
+        ->with([
+            'servicos' => function ($query) {
+                $query->select(['servico.*', 'servico_orcamento.quantidade'])
+                      ->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id');
+            },
+        ])
+        ->asArray()
+        ->all();
        
 
 
