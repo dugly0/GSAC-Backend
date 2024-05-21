@@ -2,7 +2,7 @@
 
 namespace app\modules\api\controllers;
 
-use amnah\yii2\user\models\User;
+use app\models\User;
 use app\models\Utilizador;
 use Yii;
 use yii\filters\AccessControl;

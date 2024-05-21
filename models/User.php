@@ -2,6 +2,10 @@
 
 namespace app\models;
 
+use amnah\yii2\user\models\Profile;
+use amnah\yii2\user\models\Role;
+use amnah\yii2\user\models\UserAuth;
+use amnah\yii2\user\models\UserToken;
 use Yii;
 
 /**
