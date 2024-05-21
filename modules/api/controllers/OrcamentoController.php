@@ -107,8 +107,16 @@ class OrcamentoController extends BaseRestController
 
         // Buscar os orçamentos do laboratório do utilizador
         $orcamentos = Orcamento::find()
-        ->where(['laboratorio_id' => $utilizador->idLab])
-        ->all();
+            ->select('orcamento.*') 
+            ->where(['laboratorio_id' => $utilizador->idLab])
+            ->with([
+                'servicos' => function ($query) {
+                    $query->select(['servico.*', 'servico_orcamento.quantidade'])
+                          ->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id'); // Junção explícita
+                },
+            ])
+            ->asArray() 
+            ->all();
 
         if (empty($orcamentos)) {
         throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
@@ -138,14 +146,8 @@ class OrcamentoController extends BaseRestController
         }
 
         // Buscar os orçamentos do laboratório do utilizador
-        $orcamentos = Orcamento::find()
-        ->where(['laboratorio_id' => $utilizador->idLab])
-        ->joinWith([
-            'estadoOrcamentos' => function ($query) {
-                $query->andWhere(['estado_orcamento.estado_id' => 1]);
-            }
-        ])
-        ->all();
+       
+
 
         if (empty($orcamentos)) {
         throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
