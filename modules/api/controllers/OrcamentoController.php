@@ -105,7 +105,10 @@ class OrcamentoController extends BaseRestController
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
         //Robson
-   
+        // Subconsulta para obter o estado mais recente de cada orçamento (por data)
+        $subQuery = EstadoOrcamento::find()
+        ->select(['orcamento_id', 'MAX(data) AS max_data'])
+        ->groupBy('orcamento_id');
 
 
         if (empty($orcamentos)) {
