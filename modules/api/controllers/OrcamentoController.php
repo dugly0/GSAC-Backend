@@ -26,45 +26,71 @@ class OrcamentoController extends BaseRestController
         $actions = parent::actions();
 
         // Desabilitar as ações padrão de índice e visualização
-        unset($actions['index'], $actions['view']);
+        unset($actions['index'], $actions['view'], $actions['create']);
 
         return $actions;
     }
     // Endpoint personalizado para retornar o orçamento com base no utilizador_id
     public function actionOrcamentoPorUtilizadorId()
-    {
-        // // Obter o token da autorização dos cabeçalhos da solicitação
-        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-        $user = User::findByAccessToken($authorizationHeader);
-        // Encontrar o utilizador correspondente ao usuário autenticado
-        if($user->role_id == 1){
-            $orcamentos = Orcamento::find()->all();
-            return $orcamentos;
-        }
-        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();        
-        $orcamentos = Orcamento::find()->where(['utilizador_id' => $utilizador->id])->all();
-        if (empty($orcamentos)) {
-            throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador->id.");
-        }
+{
+    // Obter o token da autorização dos cabeçalhos da solicitação
+    $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+    // Encontrar o user correspondente ao usuário autenticado
+    $user = User::findByAccessToken($authorizationHeader);
+    if ($user->role_id == 1) {
+        $orcamentos = Orcamento::find()->all();
+        //retornar todos os orçamentos se user for admin
         return $orcamentos;
     }
+    // Buscar os orçamentos do utilizador
+    $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
+    //trazendo os orçamentos do utilizador      
+    $orcamentos = Orcamento::find()
+        ->where(['utilizador_id' => $utilizador->id])
+        ->with([
+            'servicos' => function ($query) {
+                $query->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id')
+                      ->select(['servico.*','servico_orcamento.*']);
+            },
+            'estados' => function ($query) {
+                $query->innerJoin('estado_orcamento', 'estado.id = estado_orcamento.estado_id')
+                      ->select(['estado.estado', 'estado_orcamento.data']);
+            }
+        ])
+        ->asArray()
+        ->all();
+
+    if (empty($orcamentos)) {
+        throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador->id.");
+    }
+    return $orcamentos;
+}
+
+    
     public function actionCreate()
     {
-        // Verificar se os campos necessários estão presentes no corpo da requisição
-        $requiredFields = ['data_entrada', 'descricao', 'utilizador_id'];
-        foreach ($requiredFields as $field) {
-            if (!isset($requestData[$field])) {
-                throw new BadRequestHttpException("O campo '$field' é obrigatório.");
-            }
-        }
+        // // Verificar se os campos necessários estão presentes no corpo da requisição
+        // $requiredFields = ['data_entrada', 'descricao', 'utilizador_id'];
+        // foreach ($requiredFields as $field) {
+        //     if (!isset($requestData[$field])) {
+        //         throw new BadRequestHttpException("O campo '$field' é obrigatório.");
+        //     }
+        // }
+        $post = $this->request->post();
+
 
         // Criar um novo objeto de orçamento
         $model = new Orcamento();
-        $model->load($requestData, '');
+        $model->load($post, '');
 
         // Salvar o novo orçamento
         if ($model->save()) {
-            return $model;
+            $estadoOrcamento = new EstadoOrcamento();
+            $estadoOrcamento->orcamento_id = $model->id;
+            $estadoOrcamento->estado_id = 1;
+            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+            $estadoOrcamento->save();
+            return $estadoOrcamento;
         } else {
             throw new BadRequestHttpException("Falha ao criar o orçamento.");
         }
