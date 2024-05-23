@@ -34,9 +34,7 @@ class UtilizadorController extends BaseRestController
     public function actions()
     {
         $actions = parent::actions();
-        unset($actions['view']);
-        unset($actions['index']);
-        unset($actions['update']);
+        unset($actions['view'],$actions['index'],$actions['update'],$actions['delete']);
         return $actions;
     }
 
@@ -68,8 +66,9 @@ class UtilizadorController extends BaseRestController
 
         // Retorna os dados do usuário e do utilizador
         return [
-            'user' => $user,
             'utilizador' => $utilizador,
+            'username' => $user -> username,
+            'email' => $user -> email,
         ];
     }
 
@@ -88,18 +87,34 @@ class UtilizadorController extends BaseRestController
             throw new ForbiddenHttpException('Você não tem permissão para atualizar este utilizador.');
         }
 
-        // Tenta carregar os dados da requisição no modelo Utilizador
-        if ($utilizador->load(\Yii::$app->request->post(), '')) { // '' para carregar todos os atributos 
+        if ($utilizador->load(Yii::$app->request->post(), '')) {
+            // Verifica se a senha precisa ser atualizada
+            if (Yii::$app->request->post('password')) {
+                // Encontra o usuário associado ao Utilizador
+                $user = User::findOne($utilizador->user_id);
+        
+                if (!$user) {
+                    throw new NotFoundHttpException('Usuário não encontrado.');
+                }
+        
+                // Carrega o campo 'newPassword' do modelo User
+                $user->load(['newPassword' => Yii::$app->request->post('password')], ''); 
+        
+                if (!$user->save()) {
+                    Yii::$app->response->statusCode = 500;
+                    return ['errors' => 'Erro ao atualizar a senha do usuário.'];
+                }
+            }
+        
+            // Salva o Utilizador 
             if ($utilizador->save()) {
-                return $utilizador; // Retorna o modelo atualizado com sucesso
+                return ['message' => 'Informações atualizadas com sucesso'];
             } else {
-                // Em caso de erro na validação ou salvamento, retorna os erros
-                \Yii::$app->response->statusCode = 422; // Unprocessable Entity
+                Yii::$app->response->statusCode = 422;
                 return ['errors' => $utilizador->errors];
             }
         } else {
-            // Em caso de erro ao carregar os dados da requisição
-            \Yii::$app->response->statusCode = 400; // Bad Request
+            Yii::$app->response->statusCode = 400;
             return ['error' => 'Dados inválidos na requisição.'];
         }
     }
