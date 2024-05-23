@@ -115,6 +115,13 @@ class Orcamento extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Utilizador::class, ['id' => 'utilizador_id']);
     }  
+    
+    public function getTodosEstados()
+    {
+        return $this->hasMany(EstadoOrcamento::className(), ['orcamento_id' => 'id'])
+            ->with('estado')
+            ->orderBy('data ASC'); // Ordenar por data para ter o histórico em ordem cronológica
+    }
 // João
     // public function getEstadoOrcamentosAtivos()
     // {
