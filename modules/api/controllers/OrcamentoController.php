@@ -108,7 +108,18 @@ class OrcamentoController extends BaseRestController
         // Subconsulta para obter o estado mais recente de cada orçamento (por data)
         $subQuery = EstadoOrcamento::find()
         ->select(['orcamento_id', 'MAX(data) AS max_data'])
-        ->groupBy('orcamento_id');
+        ->groupBy('orcamento_id');  
+
+        // Buscar os orçamentos do laboratório do utilizador, incluindo o último estado e os serviços ativos
+    $orcamentos = Orcamento::find()
+    ->select('orcamento.*, estado.estado AS estado_orcamento')
+    ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
+    ->joinWith('servicos') // Carrega os serviços ativos
+    ->leftJoin(['eo' => $subQuery], 'orcamento.id = eo.orcamento_id') // Junção com a subconsulta
+    ->leftJoin('estado_orcamento', 'estado_orcamento.orcamento_id = orcamento.id AND estado_orcamento.data = eo.max_data')
+    ->leftJoin('estado', 'estado_orcamento.estado_id = estado.id') 
+    ->asArray()
+    ->all();
 
 
         if (empty($orcamentos)) {
