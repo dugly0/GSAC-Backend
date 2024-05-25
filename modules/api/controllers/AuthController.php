@@ -35,7 +35,8 @@ class AuthController extends Controller{
                 $user = $model->getUser();
                 Yii::$app->user->login($user);
                 return['access_token' =>
-                Yii::$app->user->identity->access_token];
+                Yii::$app->user->identity->access_token, 'role_id' =>
+                Yii::$app->user->identity->role_id,];
             }else{
                 $model->validate();
                 return $model;
