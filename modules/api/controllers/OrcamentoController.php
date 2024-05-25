@@ -104,30 +104,35 @@ class OrcamentoController extends BaseRestController
         if (!$utilizador || !$utilizador->idLab) {
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
-        //Robson
-        // Subconsulta para obter o estado mais recente de cada orçamento (por data)
-        $subQuery = EstadoOrcamento::find()
-        ->select(['orcamento_id', 'MAX(data) AS max_data'])
-        ->groupBy('orcamento_id');  
-
-        // Buscar os orçamentos do laboratório do utilizador, incluindo o último estado e os serviços ativos
+       // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
     $orcamentos = Orcamento::find()
-    ->select('orcamento.*, estado.estado AS estado_orcamento')
+    ->select('orcamento.*')
     ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
     ->joinWith('servicos') // Carrega os serviços ativos
-    ->leftJoin(['eo' => $subQuery], 'orcamento.id = eo.orcamento_id') // Junção com a subconsulta
-    ->leftJoin('estado_orcamento', 'estado_orcamento.orcamento_id = orcamento.id AND estado_orcamento.data = eo.max_data')
-    ->leftJoin('estado', 'estado_orcamento.estado_id = estado.id') 
+    ->with('estadoOrcamentos.estado') // Carrega todos os estados do orçamento
     ->asArray()
     ->all();
 
-
-        if (empty($orcamentos)) {
-        throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
+// Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+foreach ($orcamentos as &$orcamento) {
+    $ultimoEstado = null;
+    foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) { // Passagem por referência para modificar o array
+        if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
+            $ultimoEstado = $estadoOrcamento;
         }
+        // Modificar o formato do estado
+        $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado']; // Extrair apenas o nome do estado
+        unset($estadoOrcamento['estado_id']); // Remover o estado_id
+    }
+    $orcamento['estado_orcamento'] = $ultimoEstado['estado']; // Corrigido para acessar o nome do estado
+}
 
-        
-        return $orcamentos;
+if (empty($orcamentos)) {
+    throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
+}
+
+return $orcamentos;
+
 
       
     }
