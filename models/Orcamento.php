@@ -17,6 +17,7 @@ use Yii;
  * @property int|null $laboratorio_id
  *
  * @property EstadoOrcamento[] $estadoOrcamentos
+ * @property Estado[] $estado
  * @property Laboratorio $laboratorio
  * @property ServicoOrcamento[] $servicoOrcamentos
  * @property Servico[] $servicos
@@ -74,6 +75,10 @@ class Orcamento extends \yii\db\ActiveRecord
     public function getEstadoOrcamentos()
     {
         return $this->hasMany(EstadoOrcamento::class, ['orcamento_id' => 'id']);
+    }
+    public function getEstados()
+    {
+        return $this->hasMany(Estado::className(), ['id' => 'estado_id'])->via('estadoOrcamentos');
     }
 
     /**
