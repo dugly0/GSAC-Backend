@@ -206,16 +206,37 @@ class OrcamentoController extends BaseRestController
         if (!$utilizador || !$utilizador->idLab) {
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
-
-        // Buscar os orçamentos do laboratório do utilizador
+       // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
         $orcamentos = Orcamento::find()
-        ->where(['laboratorio_id' => $utilizador->idLab])
+        ->select('orcamento.*')
+        ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
+        ->joinWith('servicos') // Carrega os serviços ativos
+        ->with('estadoOrcamentos.estado') // Carrega todos os estados do orçamento
+        ->asArray()
         ->all();
 
+        // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+        foreach ($orcamentos as &$orcamento) {
+            $ultimoEstado = null;
+            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) { // Passagem por referência para modificar o array
+                if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
+                    $ultimoEstado = $estadoOrcamento;
+                }
+                // Modificar o formato do estado
+                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado']; // Extrair apenas o nome do estado
+                unset($estadoOrcamento['estado_id']); // Remover o estado_id
+            }
+            $orcamento['estado_orcamento'] = $ultimoEstado['estado']; // Corrigido para acessar o nome do estado
+        }
+
         if (empty($orcamentos)) {
-        throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
-        }        
-        return $orcamentos;      
+            throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
+        }
+
+        return $orcamentos;
+
+
+      
     }
     //gustavo
     public function actionOrcamentoPorLaboratorioComEstadoAceito()
@@ -237,13 +258,24 @@ class OrcamentoController extends BaseRestController
 
         // Buscar os orçamentos do laboratório do utilizador
         $orcamentos = Orcamento::find()
+        ->select('orcamento.*')
         ->where(['laboratorio_id' => $utilizador->idLab])
         ->joinWith([
             'estadoOrcamentos' => function ($query) {
-                $query->andWhere(['estado_orcamento.estado_id' => 1]);
-            }
+                $query->andWhere(['estado_orcamento.estado_id' => 1]); // Filtra pelo estado_id = 1 (aceito)
+            },
+            'estadoOrcamentos.estado' // Carrega os estados relacionados aos estados do orçamento
         ])
+        ->with([
+            'servicos' => function ($query) {
+                $query->select(['servico.*', 'servico_orcamento.quantidade'])
+                      ->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id');
+            },
+        ])
+        ->asArray()
         ->all();
+       
+
 
         if (empty($orcamentos)) {
         throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
