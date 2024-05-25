@@ -17,6 +17,7 @@ use Yii;
  * @property int|null $laboratorio_id
  *
  * @property EstadoOrcamento[] $estadoOrcamentos
+ * @property Estado[] $estado
  * @property Laboratorio $laboratorio
  * @property ServicoOrcamento[] $servicoOrcamentos
  * @property Servico[] $servicos
@@ -75,6 +76,10 @@ class Orcamento extends \yii\db\ActiveRecord
     {
         return $this->hasMany(EstadoOrcamento::class, ['orcamento_id' => 'id']);
     }
+    public function getEstados()
+    {
+        return $this->hasMany(Estado::className(), ['id' => 'estado_id'])->via('estadoOrcamentos');
+    }
 
     /**
      * Gets query for [[Laboratorio]].
@@ -115,18 +120,33 @@ class Orcamento extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Utilizador::class, ['id' => 'utilizador_id']);
     }  
-// João
-    public function getEstadoOrcamentosAtivos()
+    
+    public function getTodosEstados()
     {
         return $this->hasMany(EstadoOrcamento::className(), ['orcamento_id' => 'id'])
-                    ->andOnCondition(['estado_orcamento.estado_id' => 1]); 
+            ->with('estado')
+            ->orderBy('data ASC'); // Ordenar por data para ter o histórico em ordem cronológica
     }
+// João
+    // public function getEstadoOrcamentosAtivos()
+    // {
+    //     return $this->hasMany(EstadoOrcamento::className(), ['orcamento_id' => 'id'])
+    //                 ->andOnCondition(['estado_orcamento.estado_id' => 1]); 
+    // }
 
-    public static function findOrcamentosComEstadoAtivo() 
-    {
-        return self::find()
-            ->joinWith('estadoOrcamentosAtivos')
-            ->where(['estado_orcamento.estado_id' => 1]);
-    }     
+    // public static function findOrcamentosComEstadoAtivo() 
+    // {
+    //     return self::find()
+    //         ->joinWith('estadoOrcamentosAtivos')
+    //         ->where(['estado_orcamento.estado_id' => 1]);
+    // }     
+
+    // public function getServicosAtivos() // Novo método
+    // {
+    //     return $this->hasMany(Servico::className(), ['id' => 'servico_id'])
+    //         ->viaTable('servico_orcamento', ['orcamento_id' => 'id']);
+    // }
+
+    
 
 }
