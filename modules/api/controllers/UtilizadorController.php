@@ -5,31 +5,12 @@ namespace app\modules\api\controllers;
 use app\models\User;
 use app\models\Utilizador;
 use Yii;
-use yii\filters\AccessControl;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 class UtilizadorController extends BaseRestController
 {
     public $modelClass = 'app\models\Utilizador';
-
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-
-        $behaviors['access'] = [
-            'class' => AccessControl::class,
-            'rules' => [
-                [
-                    'actions' => ['create', 'update', 'view'],
-                    'allow' => true,
-                    'roles' => ['@'],
-                ],
-            ]
-        ];
-
-        return $behaviors;
-    }
 
     public function actions()
     {
