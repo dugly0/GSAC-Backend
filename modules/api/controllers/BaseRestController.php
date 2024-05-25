@@ -13,6 +13,12 @@ class BaseRestController extends ActiveController{
    {
       $behaviors = parent::behaviors();
 
+      unset($behaviors['authenticator']);
+
+      $behaviors['corsFilter'] = [
+         'class' => \yii\filters\Cors::class,
+      ];
+
       $behaviors['authentication'] = [
          'class' => CompositeAuth::class,
          'authMethods' => [

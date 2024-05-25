@@ -15,6 +15,18 @@ use yii\web\ServerErrorHttpException;
 
 class AuthController extends Controller{
 
+    public function behaviors()
+    {
+      $behaviors = parent::behaviors();
+
+      unset($behaviors['authenticator']);
+
+      $behaviors['corsFilter'] = [
+         'class' => \yii\filters\Cors::class,
+      ];
+      return $behaviors;
+    }
+
     public function actionLogin(){
         $model = new LoginForm();
 
