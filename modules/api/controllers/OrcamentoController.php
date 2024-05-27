@@ -156,38 +156,47 @@ class OrcamentoController extends BaseRestController
     }
     public function actionUpdateEstadoByIdOrcamento($idOrcamento, $idEstado)
     {
+        // Obter o token da autorização dos cabeçalhos da solicitação
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        // Encontrar o user correspondente ao usuário autenticado
+        $user = User::findByAccessToken($authorizationHeader);
+        // Buscar os dados do utilizador
+        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
+       
         // Verificar se o orçamento existe
         $orcamento = Orcamento::find()->where(['id' => $idOrcamento])->one();
         if (empty($orcamento)) {
             throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
         }
+        if($user->role_id == 1 || $orcamento->utilizador_id == $utilizador->id){
+            // Verificar se o estado é Aceito (1) ou Recusado (2)
+            if ($idEstado != 1 && $idEstado != 2) {
+                throw new \yii\web\BadRequestHttpException("O estado deve ser Aceito (1) ou Recusado (2).");
+            }
 
-        // Verificar se o estado é Aceito (1) ou Recusado (2)
-        if ($idEstado != 1 && $idEstado != 2) {
-            throw new \yii\web\BadRequestHttpException("O estado deve ser Aceito (1) ou Recusado (2).");
+            // Criar uma nova instância de EstadoOrcamento
+            $estadoOrcamento = new EstadoOrcamento();
+            $estadoOrcamento->orcamento_id = $idOrcamento;
+            $estadoOrcamento->estado_id = $idEstado;
+            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+
+            // Salvar o novo estado do orçamento
+            if ($estadoOrcamento->save()) {
+                $estado = Estado::find()->where(['id' => $idEstado])->one();
+                return [
+                    'success' => true,
+                    'message' => 'Estado do orçamento salvo com sucesso.',
+                    'estado' => $estado->estado,
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Falha ao salvar o estado.',
+                    'errors' => $estadoOrcamento->errors,
+                ];
+            }
         }
-
-        // Criar uma nova instância de EstadoOrcamento
-        $estadoOrcamento = new EstadoOrcamento();
-        $estadoOrcamento->orcamento_id = $idOrcamento;
-        $estadoOrcamento->estado_id = $idEstado;
-        $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
-
-        // Salvar o novo estado do orçamento
-        if ($estadoOrcamento->save()) {
-            $estado = Estado::find()->where(['id' => $idEstado])->one();
-            return [
-                'success' => true,
-                'message' => 'Estado do orçamento salvo com sucesso.',
-                'estado' => $estado->estado,
-            ];
-        } else {
-            return [
-                'success' => false,
-                'message' => 'Falha ao salvar o estado.',
-                'errors' => $estadoOrcamento->errors,
-            ];
-        }
+        throw new \yii\web\NotFoundHttpException("Não foi encontrado orçamento com ID $idOrcamento para o utilizador com ID $utilizador->id ou o orçamento não foi criado pelo usuário.");
     }
     //João
     public function actionOrcamentoPorLaboratorio()
