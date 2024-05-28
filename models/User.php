@@ -41,7 +41,7 @@ class User extends AmnahUser
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getUtilizadors()
+    public function getUtilizador()
     {
         return $this->hasMany(Utilizador::class, ['user_id' => 'id']);
     }
