@@ -225,7 +225,32 @@ class OrcamentoController extends BaseRestController
     ->asArray()
     ->all();
 
+// Buscar os serviços de cada orçamento individualmente
+foreach ($orcamentos as &$orcamento) {
+    $orcamento['servicos'] = ServicoOrcamento::find()
+        ->select('servico.*, servico_orcamento.quantidade')
+        ->where(['servico_orcamento.orcamento_id' => $orcamento['id']])
+        ->joinWith('servico', false) // Desabilita o eager loading do relacionamento 'servico'
+        ->asArray()
+        ->all();
 
+    // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+    $ultimoEstado = null;
+    foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
+        if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
+            $ultimoEstado = $estadoOrcamento;
+        }
+        $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
+        unset($estadoOrcamento['estado_id']);
+    }
+    $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
+}
+
+if (empty($orcamentos)) {
+    throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
+}
+
+return $orcamentos;
       
     }
     //gustavo
