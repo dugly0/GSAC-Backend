@@ -321,4 +321,45 @@ class OrcamentoController extends BaseRestController
             return $model->getErrors();
         }
     }
+
+    
+    public function actionUpdateOrcamento($id)
+    {
+        $model = Orcamento::findOne($id);
+
+        // Lógica de autorização e verificação
+        $authorizationHeader = Yii::$app->request->headers->get('Authorization');
+        $user = User::findByAccessToken($authorizationHeader); 
+
+        if (!$user) {
+            throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+        }
+
+        // Forçamos o carregamento do Utilizador (mesmo que já tenha sido carregado)
+        $user->populateRelation('utilizador', $user->getUtilizador()->one()); 
+
+        // Agora o utilizador está garantidamente carregado
+        if (!$user->utilizador->idLab) { 
+            throw new NotFoundHttpException("Utilizador não associado a um laboratório.");
+        }
+
+        // Verificamos se o laboratório do orçamento corresponde ao laboratório do utilizador
+        if ($model->laboratorio_id !== $user->utilizador->idLab) {
+            throw new ForbiddenHttpException("Você não tem permissão para atualizar este orçamento.");
+        }
+
+        // Carregar os dados do corpo da requisição para o modelo (após a verificação)
+        $model->load(Yii::$app->request->bodyParams, '');
+
+        if ($model->save()) {
+            Yii::$app->response->statusCode = 200; // Código de sucesso
+            return ['message' => 'Data de entrega atualizada com sucesso', 'orcamento' => $model]; // Retorna o orçamento atualizado
+        } else {
+            Yii::$app->response->statusCode = 422; // Unprocessable Entity
+            return $model->errors;
+        }
+    }
+
+   
+  
 }
