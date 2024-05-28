@@ -215,34 +215,7 @@ class OrcamentoController extends BaseRestController
         if (!$utilizador || !$utilizador->idLab) {
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
-       // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
-        $orcamentos = Orcamento::find()
-        ->select('orcamento.*')
-        ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
-        ->joinWith('servicos') // Carrega os serviços ativos
-        ->with('estadoOrcamentos.estado') // Carrega todos os estados do orçamento
-        ->asArray()
-        ->all();
-
-        // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
-        foreach ($orcamentos as &$orcamento) {
-            $ultimoEstado = null;
-            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) { // Passagem por referência para modificar o array
-                if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
-                    $ultimoEstado = $estadoOrcamento;
-                }
-                // Modificar o formato do estado
-                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado']; // Extrair apenas o nome do estado
-                unset($estadoOrcamento['estado_id']); // Remover o estado_id
-            }
-            $orcamento['estado_orcamento'] = $ultimoEstado['estado']; // Corrigido para acessar o nome do estado
-        }
-
-        if (empty($orcamentos)) {
-            throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
-        }
-
-        return $orcamentos;
+        
 
 
       
