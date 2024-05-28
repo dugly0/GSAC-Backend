@@ -215,7 +215,15 @@ class OrcamentoController extends BaseRestController
         if (!$utilizador || !$utilizador->idLab) {
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
-        
+        // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
+    $orcamentos = Orcamento::find()
+    ->select('orcamento.*')
+    ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
+    ->with([
+        'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
+    ])
+    ->asArray()
+    ->all();
 
 
       
