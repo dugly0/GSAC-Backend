@@ -216,41 +216,41 @@ class OrcamentoController extends BaseRestController
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
         // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
-    $orcamentos = Orcamento::find()
-    ->select('orcamento.*')
-    ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
-    ->with([
-        'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
-    ])
-    ->asArray()
-    ->all();
-
-// Buscar os serviços de cada orçamento individualmente
-foreach ($orcamentos as &$orcamento) {
-    $orcamento['servicos'] = ServicoOrcamento::find()
-        ->select('servico.*, servico_orcamento.quantidade')
-        ->where(['servico_orcamento.orcamento_id' => $orcamento['id']])
-        ->joinWith('servico', false) // Desabilita o eager loading do relacionamento 'servico'
+        $orcamentos = Orcamento::find()
+        ->select('orcamento.*')
+        ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
+        ->with([
+            'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
+        ])
         ->asArray()
         ->all();
 
-    // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
-    $ultimoEstado = null;
-    foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
-        if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
-            $ultimoEstado = $estadoOrcamento;
+        // Buscar os serviços de cada orçamento individualmente
+        foreach ($orcamentos as &$orcamento) {
+            $orcamento['servicos'] = ServicoOrcamento::find()
+                ->select('servico.*, servico_orcamento.quantidade')
+                ->where(['servico_orcamento.orcamento_id' => $orcamento['id']])
+                ->joinWith('servico', false) // Desabilita o eager loading do relacionamento 'servico'
+                ->asArray()
+                ->all();
+
+            // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+            $ultimoEstado = null;
+            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
+                if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
+                    $ultimoEstado = $estadoOrcamento;
+                }
+                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
+                unset($estadoOrcamento['estado_id']);
+            }
+            $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
         }
-        $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
-        unset($estadoOrcamento['estado_id']);
-    }
-    $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
-}
 
-if (empty($orcamentos)) {
-    throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
-}
+        if (empty($orcamentos)) {
+            throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
+        }
 
-return $orcamentos;
+        return $orcamentos;
       
     }
     //gustavo
