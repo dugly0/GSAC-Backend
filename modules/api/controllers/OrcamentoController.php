@@ -233,27 +233,35 @@ class OrcamentoController extends BaseRestController
         if (!$utilizador || !$utilizador->idLab) {
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
-       // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
+        // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
         $orcamentos = Orcamento::find()
         ->select('orcamento.*')
         ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
-        ->joinWith('servicos') // Carrega os serviços ativos
-        ->with('estadoOrcamentos.estado') // Carrega todos os estados do orçamento
+        ->with([
+            'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
+        ])
         ->asArray()
         ->all();
 
-        // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+        // Buscar os serviços de cada orçamento individualmente
         foreach ($orcamentos as &$orcamento) {
+            $orcamento['servicos'] = ServicoOrcamento::find()
+                ->select('servico.*, servico_orcamento.quantidade')
+                ->where(['servico_orcamento.orcamento_id' => $orcamento['id']])
+                ->joinWith('servico', false) // Desabilita o eager loading do relacionamento 'servico'
+                ->asArray()
+                ->all();
+
+            // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
             $ultimoEstado = null;
-            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) { // Passagem por referência para modificar o array
+            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
                 if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
                     $ultimoEstado = $estadoOrcamento;
                 }
-                // Modificar o formato do estado
-                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado']; // Extrair apenas o nome do estado
-                unset($estadoOrcamento['estado_id']); // Remover o estado_id
+                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
+                unset($estadoOrcamento['estado_id']);
             }
-            $orcamento['estado_orcamento'] = $ultimoEstado['estado']; // Corrigido para acessar o nome do estado
+            $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
         }
 
         if (empty($orcamentos)) {
@@ -261,8 +269,6 @@ class OrcamentoController extends BaseRestController
         }
 
         return $orcamentos;
-
-
       
     }
     //gustavo
