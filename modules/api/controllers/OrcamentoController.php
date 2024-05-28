@@ -36,11 +36,29 @@ class OrcamentoController extends BaseRestController
         // Obter o token da autorização dos cabeçalhos da solicitação
         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
         // Encontrar o user correspondente ao usuário autenticado
+   
         $user = User::findByAccessToken($authorizationHeader);
         if ($user->role_id == 1) {
-            $orcamentos = Orcamento::find()->all();
+            $orcamentos = Orcamento::find()
             //retornar todos os orçamentos se user for admin
-            return $orcamentos;
+            //->where(['utilizador_id' => $user->id])
+            ->with([
+                'servicos' => function ($query) {
+                    $query->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id')
+                        ->select(['servico.*','servico_orcamento.*']);
+                },
+                'estados' => function ($query) {
+                    $query->innerJoin('estado_orcamento', 'estado.id = estado_orcamento.estado_id')
+                        ->select(['estado.*']);
+                }
+            ])
+            ->asArray()
+            ->all();
+
+        if (empty($orcamentos)) {
+            throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $user->id.");
+        }
+        return $orcamentos;
         }
         // Buscar os orçamentos do utilizador
         $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
