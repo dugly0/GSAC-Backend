@@ -64,7 +64,8 @@ $config = [
             ],
                 // Rota personalizada para a atualização de orçamento
                 'PUT api/orcamento/update/<id:\d+>' => 'api/orcamento/update',
-                'PUT api/orcamento/update-orcamento/<id:\d+>' => 'api/orcamento/update-orcamento',
+                'PUT api/orcamento/update-orcamento-lab/<id:\d+>' => 'api/orcamento/update-orcamento-lab',
+                'PUT api/orcamento/<orcamentoId:\d+>/servico-orcamento/<servicoId:\d+>' => 'api/orcamento/update-servico-orcamento',
             ],
         ],
         

@@ -341,7 +341,7 @@ class OrcamentoController extends BaseRestController
     }
 
     
-    public function actionUpdateOrcamento($id)
+    public function actionUpdateOrcamentoLab($id)
     {
         $model = Orcamento::findOne($id);
         if ($model === null) {
