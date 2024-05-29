@@ -380,6 +380,61 @@ class OrcamentoController extends BaseRestController
         }
     }
 
-   
+    public function actionUpdateServicoOrcamento($orcamentoId, $servicoId)
+    {
+        // Buscar o registro na tabela servico_orcamento
+        $servicoOrcamento = ServicoOrcamento::findOne([
+            'orcamento_id' => $orcamentoId,
+            'servico_id' => $servicoId,
+        ]);
+    
+        if (!$servicoOrcamento) {
+            throw new NotFoundHttpException("Registro não encontrado na tabela servico_orcamento.");
+        }
+    
+        // Lógica de autorização e verificação (adaptada do seu código)
+        $authorizationHeader = Yii::$app->request->headers->get('Authorization');
+        $user = User::findByAccessToken($authorizationHeader);
+    
+        if (!$user) {
+            throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+        }
+    
+        // Forçamos o carregamento do Utilizador (mesmo que já tenha sido carregado)
+        $user->populateRelation('utilizador', $user->getUtilizador()->one());
+    
+        // Agora o utilizador está garantidamente carregado
+        if (!$user->utilizador->idLab) {
+            throw new NotFoundHttpException("Utilizador não associado a um laboratório.");
+        }
+    
+        // Buscar o orçamento para verificar o laboratório
+        $orcamento = Orcamento::findOne($orcamentoId);
+        if (!$orcamento) {
+            throw new NotFoundHttpException("Orçamento não encontrado.");
+        }
+    
+        // Verificamos se o laboratório do orçamento corresponde ao laboratório do utilizador
+        if ($orcamento->laboratorio_id !== $user->utilizador->idLab) {
+            throw new ForbiddenHttpException("Você não tem permissão para atualizar este serviço no orçamento.");
+        }
+    
+        // Carregar os dados da requisição (servico_id e quantidade)
+        $servicoOrcamento->load(Yii::$app->request->bodyParams, '');
+    
+        // Validação adicional (opcional): verificar se o novo servico_id pertence ao laboratório
+        $servico = Servico::findOne($servicoOrcamento->servico_id);
+        if (!$servico || $servico->laboratorio_id !== $orcamento->laboratorio_id) {
+            throw new ForbiddenHttpException("O serviço não pertence ao laboratório do orçamento.");
+        }
+    
+        if ($servicoOrcamento->save()) {
+            Yii::$app->response->statusCode = 200;
+            return ['message' => 'Serviço no orçamento atualizado com sucesso', 'servicoOrcamento' => $servicoOrcamento];
+        } else {
+            Yii::$app->response->statusCode = 422;
+            return $servicoOrcamento->errors;
+        }
+    }
   
 }
