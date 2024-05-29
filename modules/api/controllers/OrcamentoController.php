@@ -344,7 +344,9 @@ class OrcamentoController extends BaseRestController
     public function actionUpdateOrcamento($id)
     {
         $model = Orcamento::findOne($id);
-
+        if ($model === null) {
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
         // Lógica de autorização e verificação
         $authorizationHeader = Yii::$app->request->headers->get('Authorization');
         $user = User::findByAccessToken($authorizationHeader); 
