@@ -36,11 +36,29 @@ class OrcamentoController extends BaseRestController
         // Obter o token da autorização dos cabeçalhos da solicitação
         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
         // Encontrar o user correspondente ao usuário autenticado
+   
         $user = User::findByAccessToken($authorizationHeader);
         if ($user->role_id == 1) {
-            $orcamentos = Orcamento::find()->all();
+            $orcamentos = Orcamento::find()
             //retornar todos os orçamentos se user for admin
-            return $orcamentos;
+            //->where(['utilizador_id' => $user->id])
+            ->with([
+                'servicos' => function ($query) {
+                    $query->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id')
+                        ->select(['servico.*','servico_orcamento.*']);
+                },
+                'estados' => function ($query) {
+                    $query->innerJoin('estado_orcamento', 'estado.id = estado_orcamento.estado_id')
+                        ->select(['estado.*']);
+                }
+            ])
+            ->asArray()
+            ->all();
+
+        if (empty($orcamentos)) {
+            throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $user->id.");
+        }
+        return $orcamentos;
         }
         // Buscar os orçamentos do utilizador
         $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
@@ -156,38 +174,47 @@ class OrcamentoController extends BaseRestController
     }
     public function actionUpdateEstadoByIdOrcamento($idOrcamento, $idEstado)
     {
+        // Obter o token da autorização dos cabeçalhos da solicitação
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        // Encontrar o user correspondente ao usuário autenticado
+        $user = User::findByAccessToken($authorizationHeader);
+        // Buscar os dados do utilizador
+        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
+       
         // Verificar se o orçamento existe
         $orcamento = Orcamento::find()->where(['id' => $idOrcamento])->one();
         if (empty($orcamento)) {
             throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
         }
+        if($user->role_id == 1 || $orcamento->utilizador_id == $utilizador->id){
+            // Verificar se o estado é Aceito (1) ou Recusado (2)
+            if ($idEstado != 1 && $idEstado != 2) {
+                throw new \yii\web\BadRequestHttpException("O estado deve ser Aceito (1) ou Recusado (2).");
+            }
 
-        // Verificar se o estado é Aceito (1) ou Recusado (2)
-        if ($idEstado != 1 && $idEstado != 2) {
-            throw new \yii\web\BadRequestHttpException("O estado deve ser Aceito (1) ou Recusado (2).");
+            // Criar uma nova instância de EstadoOrcamento
+            $estadoOrcamento = new EstadoOrcamento();
+            $estadoOrcamento->orcamento_id = $idOrcamento;
+            $estadoOrcamento->estado_id = $idEstado;
+            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+
+            // Salvar o novo estado do orçamento
+            if ($estadoOrcamento->save()) {
+                $estado = Estado::find()->where(['id' => $idEstado])->one();
+                return [
+                    'success' => true,
+                    'message' => 'Estado do orçamento salvo com sucesso.',
+                    'estado' => $estado->estado,
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Falha ao salvar o estado.',
+                    'errors' => $estadoOrcamento->errors,
+                ];
+            }
         }
-
-        // Criar uma nova instância de EstadoOrcamento
-        $estadoOrcamento = new EstadoOrcamento();
-        $estadoOrcamento->orcamento_id = $idOrcamento;
-        $estadoOrcamento->estado_id = $idEstado;
-        $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
-
-        // Salvar o novo estado do orçamento
-        if ($estadoOrcamento->save()) {
-            $estado = Estado::find()->where(['id' => $idEstado])->one();
-            return [
-                'success' => true,
-                'message' => 'Estado do orçamento salvo com sucesso.',
-                'estado' => $estado->estado,
-            ];
-        } else {
-            return [
-                'success' => false,
-                'message' => 'Falha ao salvar o estado.',
-                'errors' => $estadoOrcamento->errors,
-            ];
-        }
+        throw new \yii\web\NotFoundHttpException("Não foi encontrado orçamento com ID $idOrcamento para o utilizador com ID $utilizador->id ou o orçamento não foi criado pelo usuário.");
     }
     //João
     public function actionOrcamentoPorLaboratorio()
@@ -206,27 +233,35 @@ class OrcamentoController extends BaseRestController
         if (!$utilizador || !$utilizador->idLab) {
         throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
-       // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
+        // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
         $orcamentos = Orcamento::find()
         ->select('orcamento.*')
         ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
-        ->joinWith('servicos') // Carrega os serviços ativos
-        ->with('estadoOrcamentos.estado') // Carrega todos os estados do orçamento
+        ->with([
+            'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
+        ])
         ->asArray()
         ->all();
 
-        // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+        // Buscar os serviços de cada orçamento individualmente
         foreach ($orcamentos as &$orcamento) {
+            $orcamento['servicos'] = ServicoOrcamento::find()
+                ->select('servico.*, servico_orcamento.quantidade')
+                ->where(['servico_orcamento.orcamento_id' => $orcamento['id']])
+                ->joinWith('servico', false) // Desabilita o eager loading do relacionamento 'servico'
+                ->asArray()
+                ->all();
+
+            // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
             $ultimoEstado = null;
-            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) { // Passagem por referência para modificar o array
+            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
                 if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
                     $ultimoEstado = $estadoOrcamento;
                 }
-                // Modificar o formato do estado
-                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado']; // Extrair apenas o nome do estado
-                unset($estadoOrcamento['estado_id']); // Remover o estado_id
+                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
+                unset($estadoOrcamento['estado_id']);
             }
-            $orcamento['estado_orcamento'] = $ultimoEstado['estado']; // Corrigido para acessar o nome do estado
+            $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
         }
 
         if (empty($orcamentos)) {
@@ -234,8 +269,6 @@ class OrcamentoController extends BaseRestController
         }
 
         return $orcamentos;
-
-
       
     }
     //gustavo
@@ -306,4 +339,153 @@ class OrcamentoController extends BaseRestController
             return $model->getErrors();
         }
     }
+
+    
+    public function actionUpdateOrcamentoLab($id)
+    {
+        $model = Orcamento::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
+        // Lógica de autorização e verificação
+        $authorizationHeader = Yii::$app->request->headers->get('Authorization');
+        $user = User::findByAccessToken($authorizationHeader); 
+
+        if (!$user) {
+            throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+        }
+
+        // Forçamos o carregamento do Utilizador (mesmo que já tenha sido carregado)
+        $user->populateRelation('utilizador', $user->getUtilizador()->one()); 
+
+        // Agora o utilizador está garantidamente carregado
+        if (!$user->utilizador->idLab) { 
+            throw new NotFoundHttpException("Utilizador não associado a um laboratório.");
+        }
+
+        // Verificamos se o laboratório do orçamento corresponde ao laboratório do utilizador
+        if ($model->laboratorio_id !== $user->utilizador->idLab) {
+            throw new ForbiddenHttpException("Você não tem permissão para atualizar este orçamento.");
+        }
+
+        // Carregar os dados do corpo da requisição para o modelo (após a verificação)
+        $model->load(Yii::$app->request->bodyParams, '');
+
+        if ($model->save()) {
+            Yii::$app->response->statusCode = 200; // Código de sucesso
+            return ['message' => 'Data de entrega atualizada com sucesso', 'orcamento' => $model]; // Retorna o orçamento atualizado
+        } else {
+            Yii::$app->response->statusCode = 422; // Unprocessable Entity
+            return $model->errors;
+        }
+    }
+
+    public function actionUpdateServicoOrcamentoLab($orcamentoId, $servicoId)
+    {
+        // Buscar o registro na tabela servico_orcamento
+        $servicoOrcamento = ServicoOrcamento::findOne([
+            'orcamento_id' => $orcamentoId,
+            'servico_id' => $servicoId,
+        ]);
+    
+        if (!$servicoOrcamento) {
+            throw new NotFoundHttpException("Registro não encontrado na tabela servico_orcamento.");
+        }
+    
+        // Lógica de autorização e verificação (adaptada do seu código)
+        $authorizationHeader = Yii::$app->request->headers->get('Authorization');
+        $user = User::findByAccessToken($authorizationHeader);
+    
+        if (!$user) {
+            throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+        }
+    
+        // Forçamos o carregamento do Utilizador (mesmo que já tenha sido carregado)
+        $user->populateRelation('utilizador', $user->getUtilizador()->one());
+    
+        // Agora o utilizador está garantidamente carregado
+        if (!$user->utilizador->idLab) {
+            throw new NotFoundHttpException("Utilizador não associado a um laboratório.");
+        }
+    
+        // Buscar o orçamento para verificar o laboratório
+        $orcamento = Orcamento::findOne($orcamentoId);
+        if (!$orcamento) {
+            throw new NotFoundHttpException("Orçamento não encontrado.");
+        }
+    
+        // Verificamos se o laboratório do orçamento corresponde ao laboratório do utilizador
+        if ($orcamento->laboratorio_id !== $user->utilizador->idLab) {
+            throw new ForbiddenHttpException("Você não tem permissão para atualizar este serviço no orçamento.");
+        }
+    
+        // Carregar os dados da requisição (servico_id e quantidade)
+        $servicoOrcamento->load(Yii::$app->request->bodyParams, '');
+    
+        // Validação adicional (opcional): verificar se o novo servico_id pertence ao laboratório
+        $servico = Servico::findOne($servicoOrcamento->servico_id);
+        if (!$servico || $servico->laboratorio_id !== $orcamento->laboratorio_id) {
+            throw new ForbiddenHttpException("O serviço não pertence ao laboratório do orçamento.");
+        }
+    
+        if ($servicoOrcamento->save()) {
+            Yii::$app->response->statusCode = 200;
+            return ['message' => 'Serviço no orçamento atualizado com sucesso', 'servicoOrcamento' => $servicoOrcamento];
+        } else {
+            Yii::$app->response->statusCode = 422;
+            return $servicoOrcamento->errors;
+        }
+    }
+
+    public function actionCreateEstadoOrcamentoLab($orcamentoId)
+    {
+        // Buscar o orçamento
+        $orcamento = Orcamento::findOne($orcamentoId);
+        if (!$orcamento) {
+            throw new NotFoundHttpException("O orçamento com ID $orcamentoId não foi encontrado.");
+        }
+
+        // Lógica de autorização e verificação (reaproveitada)
+        $authorizationHeader = Yii::$app->request->headers->get('Authorization');
+        $user = User::findByAccessToken($authorizationHeader);
+
+        if (!$user) {
+            throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+        }
+
+        // Forçamos o carregamento do Utilizador (mesmo que já tenha sido carregado)
+        $user->populateRelation('utilizador', $user->getUtilizador()->one());
+
+        // Agora o utilizador está garantidamente carregado
+        if (!$user->utilizador->idLab) {
+            throw new NotFoundHttpException("Utilizador não associado a um laboratório.");
+        }
+
+        // Verificamos se o laboratório do orçamento corresponde ao laboratório do utilizador
+        if ($orcamento->laboratorio_id !== $user->utilizador->idLab) {
+            throw new ForbiddenHttpException("Você não tem permissão para criar um estado para este orçamento.");
+        }
+
+        // Criar um novo modelo EstadoOrcamento
+        $estadoOrcamento = new EstadoOrcamento();
+        $estadoOrcamento->orcamento_id = $orcamentoId; // Definir o ID do orçamento
+        $estadoOrcamento->data = date('Y-m-d'); // Data atual
+
+        // Carregar os dados da requisição (estado_id)
+        $estadoOrcamento->load(Yii::$app->request->bodyParams, '');
+
+        // Validação verificar se o estado_id é válido
+        if (!Estado::findOne($estadoOrcamento->estado_id)) {
+            throw new \yii\web\BadRequestHttpException("Estado não encontrado.");
+        }
+
+        if ($estadoOrcamento->save()) {
+            Yii::$app->response->statusCode = 201; // Created
+            return ['message' => 'Estado do orçamento criado com sucesso', 'estadoOrcamento' => $estadoOrcamento];
+        } else {
+            Yii::$app->response->statusCode = 422; // Unprocessable Entity
+            return $estadoOrcamento->errors;
+        }
+    }
+  
 }
