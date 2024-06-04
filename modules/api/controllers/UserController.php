@@ -38,9 +38,29 @@ class UserController extends BaseRestController{
 
         unset($actions['delete']);
         unset($actions['view']);
+        unset($actions['index']);
 
         return $actions;
     }
+
+    public function getUtilizador()
+{
+    return $this->hasOne(Utilizador::class, ['user_id' => 'id']);
+}
+
+public function actionIndex()
+{
+    $users = User::find()->with('utilizador')->all(); // Carrega os dados do Utilizador
+
+    $data = [];
+    foreach ($users as $user) {
+        $userData = $user->toArray();
+        $userData['utilizador'] = $user->utilizador ? $user->utilizador->toArray() : null; // Adiciona os dados do Utilizador
+        $data[] = $userData;
+    }
+
+    return $data;
+}
     
     public function actionSetRole($id, $role_id)
 {
@@ -121,4 +141,5 @@ public function findModel($id)
   }
   return $model;
 }
+
 }
