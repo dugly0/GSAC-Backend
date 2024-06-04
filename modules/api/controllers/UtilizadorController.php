@@ -19,39 +19,34 @@ class UtilizadorController extends BaseRestController
         return $actions;
     }
 
-    public function actionView($id)
-    {
-        // Obtém o modelo 'utilizador' pelo ID
-        $utilizador = $this->findModel($id);
+    public function actionView()
+{
+    // Obtém o cabeçalho de autorização
+    $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
 
-        // Verifica se o modelo 'utilizador' foi encontrado 
-        if (!$utilizador) {
-            throw new NotFoundHttpException('Utilizador não encontrado.');
-        }
+    // Busca o usuário pelo token de acesso
+    $user = User::findByAccessToken($authorizationHeader);
 
-        // Obtém o cabeçalho de autorização da requisição
-        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-
-        // Busca o usuário pelo token de acesso
-        $user = User::findByAccessToken($authorizationHeader);
-
-        // Verifica se o usuário foi encontrado
-        if (!$user) {
-            throw new NotFoundHttpException('Utilizador não encontrado.');
-        }
-
-        // Verifica se o usuário autenticado tem permissão para visualizar o utilizador
-        if ($utilizador->user_id !== $user->id) {
-            throw new ForbiddenHttpException('Você não tem permissão para visualizar este utilizador.');
-        }
-
-        // Retorna os dados do usuário e do utilizador
-        return [
-            'utilizador' => $utilizador,
-            'username' => $user -> username,
-            'email' => $user -> email,
-        ];
+    // Verifica se o usuário foi encontrado
+    if (!$user) {
+        throw new NotFoundHttpException('Usuário não encontrado.');
     }
+
+    // Busca o Utilizador associado ao usuário
+    $utilizador = Utilizador::findOne(['user_id' => $user->id]);
+
+    // Verifica se o Utilizador foi encontrado
+    if (!$utilizador) {
+        throw new NotFoundHttpException('Utilizador não encontrado.');
+    }
+
+    // Retorna os dados do usuário e do utilizador
+    return [
+        'utilizador' => $utilizador,
+        'username' => $user->username,
+        'email' => $user->email,
+    ];
+}
 
     public function actionUpdate($id)
     {
