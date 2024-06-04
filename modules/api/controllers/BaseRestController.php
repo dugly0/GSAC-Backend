@@ -40,6 +40,12 @@ class BaseRestController extends ActiveController{
                'allow' => true,
                'roles' => ['@'],
             ],
+            [
+               'actions' => ['index', 'view', 'create', 'orcamento-por-laboratorio', 'orcamento-por-laboratorio-com-estado-aceito', 'update-orcamento-lab', 'update-servico-orcamento-lab', 'create-estado-orcamento-lab'
+            ],
+               'allow' => true,
+               'roles' => ['lab'],
+            ],
          ]
       ];
 
