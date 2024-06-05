@@ -222,54 +222,68 @@ class OrcamentoController extends BaseRestController
         // Obter o token de autorização dos cabeçalhos da requisição
         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
         $user = User::findByAccessToken($authorizationHeader);
-
+    
         if (!$user) {
-        throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
+            throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
         }
-
+    
         // Encontrar o utilizador correspondente ao usuário autenticado
         $utilizador = Utilizador::findOne(['user_id' => $user->id]);
-
+    
         if (!$utilizador || !$utilizador->idLab) {
-        throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
+            throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
         }
+    
+        // Subconsulta para obter o estado mais recente de cada orçamento (por data)
+        $subQuery = EstadoOrcamento::find()
+            ->select(['orcamento_id', 'MAX(data) AS max_data'])
+            ->groupBy('orcamento_id');
+    
         // Buscar os orçamentos do laboratório do utilizador, incluindo todos os estados e os serviços ativos
-        $orcamentos = Orcamento::find()
-        ->select('orcamento.*')
-        ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
-        ->with([
-            'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
-        ])
-        ->asArray()
-        ->all();
+    $orcamentos = Orcamento::find()
+    ->select([
+        'orcamento.*',
+        'utilizador.nome AS nome_utilizador',
+        'laboratorio.nome AS nome_laboratorio'
+    ])
+    ->where(['orcamento.laboratorio_id' => $utilizador->idLab])
+    ->leftJoin('estado_orcamento', 'estado_orcamento.orcamento_id = orcamento.id')
+    ->leftJoin('estado', 'estado_orcamento.estado_id = estado.id')
+    ->leftJoin('utilizador', 'orcamento.utilizador_id = utilizador.id')
+    ->leftJoin('laboratorio', 'orcamento.laboratorio_id = laboratorio.id')
+    ->with([
+        'servicos' => function ($query) { // Carrega apenas os serviços, sem o relacionamento servicoOrcamentos
+            $query->select('servico.*, servico_orcamento.quantidade')
+                  ->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id');
+        },
+        'estadoOrcamentos.estado' // Carrega todos os estados do orçamento
+    ])
+    ->asArray()
+    ->all();
 
-        // Buscar os serviços de cada orçamento individualmente
-        foreach ($orcamentos as &$orcamento) {
-            $orcamento['servicos'] = ServicoOrcamento::find()
-                ->select('servico.*, servico_orcamento.quantidade')
-                ->where(['servico_orcamento.orcamento_id' => $orcamento['id']])
-                ->joinWith('servico', false) // Desabilita o eager loading do relacionamento 'servico'
-                ->asArray()
-                ->all();
-
-            // Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
-            $ultimoEstado = null;
-            foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
-                if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
-                    $ultimoEstado = $estadoOrcamento;
-                }
-                $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
-                unset($estadoOrcamento['estado_id']);
-            }
-            $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
+// Encontrar o estado mais recente (com base no ID) e adicionar ao resultado
+foreach ($orcamentos as &$orcamento) {
+    $ultimoEstado = null;
+    foreach ($orcamento['estadoOrcamentos'] as &$estadoOrcamento) {
+        if ($ultimoEstado === null || $estadoOrcamento['id'] > $ultimoEstado['id']) {
+            $ultimoEstado = $estadoOrcamento;
         }
+        $estadoOrcamento['estado'] = $estadoOrcamento['estado']['estado'];
+        unset($estadoOrcamento['estado_id']);
+    }
+    $orcamento['estado_orcamento'] = $ultimoEstado['estado'];
 
-        if (empty($orcamentos)) {
-            throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
-        }
+    // Remove o campo servicoOrcamentos de cada serviço
+    foreach ($orcamento['servicos'] as &$servico) {
+        unset($servico['servicoOrcamentos']);
+    }
+}
 
-        return $orcamentos;
-      
+if (empty($orcamentos)) {
+    throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
+}
+
+return $orcamentos;
     }
     //gustavo
     public function actionOrcamentoPorLaboratorioComEstadoAceito()
