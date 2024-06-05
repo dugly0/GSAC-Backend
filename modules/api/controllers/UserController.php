@@ -2,10 +2,13 @@
 
 namespace app\modules\api\controllers;
 
+use amnah\yii2\user\models\UserToken;
+use app\models\Role;
 use app\models\User;
 use app\models\Utilizador;
 use Yii;
 use yii\filters\AccessControl;
+use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
@@ -22,7 +25,7 @@ class UserController extends BaseRestController{
          'class' => AccessControl::class,
          'rules' => [
              [
-               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role'],
+               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role', 'register'],
                'allow' => true,
                'roles' => ['admin'],
             ],
@@ -132,6 +135,70 @@ public function actionView($id)
         'utilizador' => $utilizador,
     ];
 }
+
+public function actionRegister()
+{
+    $user = new User();
+    $post = $this->request->post();
+
+    if (!$post) {
+        throw new ServerErrorHttpException('Erro a criar utilizador');
+    }
+
+    // Carregar dados do usuário
+    if ($user->load($post, '')) { 
+        // Validar dados do usuário
+        if ($user->validate()) {
+            // Obter o role_id do POST (ou definir um padrão)
+            $roleId = $post['role_id'] ?? Role::ROLE_USER; // Role::ROLE_USER é o padrão
+
+            // Verificar se o roleId é válido
+            if (!in_array($roleId, Role::getValidRoleIds())) {
+                throw new BadRequestHttpException('Role inválido.');
+            }
+
+            $user->setRegisterAttributes($roleId); 
+
+            if ($user->save()) {
+                $utilizador = new Utilizador();
+                $utilizador->load($post, '');
+                $utilizador->user_id = $user->id;
+                $utilizador->save();
+            }
+
+            $this->afterRegister($user);
+        }
+    }
+
+    return $user;
+}
+
+protected function afterRegister($user)
+    {
+        /** @var \amnah\yii2\user\models\UserToken $userToken */
+        $userToken = new UserToken();
+
+        // determine userToken type to see if we need to send email
+        $userTokenType = null;
+        if ($user->status == $user::STATUS_INACTIVE) {
+            $userTokenType = $userToken::TYPE_EMAIL_ACTIVATE;
+        } elseif ($user->status == $user::STATUS_UNCONFIRMED_EMAIL) {
+            $userTokenType = $userToken::TYPE_EMAIL_CHANGE;
+        }
+
+        // check if we have a userToken type to process, or just log user in directly
+        if ($userTokenType) {
+            $userToken = $userToken::generate($user->id, $userTokenType);
+            if (!$numSent = $user->sendEmailConfirmation($userToken)) {
+
+                // handle email error
+                //Yii::$app->session->setFlash("Email-error", "Failed to send email");
+            }
+        } else {
+            Yii::$app->user->login($user);
+        }
+    }
+
 
 public function findModel($id)
 {
