@@ -283,50 +283,7 @@ class OrcamentoController extends BaseRestController
 
         return $orcamentos;
     }
-    //gustavo
-    public function actionOrcamentoPorLaboratorioComEstadoAceito()
-    {
-        // Obter o token de autorização dos cabeçalhos da requisição
-        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-        $user = User::findByAccessToken($authorizationHeader);
 
-        if (!$user) {
-        throw new ForbiddenHttpException("Você não tem permissão para acessar este recurso.");
-        }
-
-        // Encontrar o utilizador correspondente ao usuário autenticado
-        $utilizador = Utilizador::findOne(['user_id' => $user->id]);
-
-        if (!$utilizador || !$utilizador->idLab) {
-        throw new NotFoundHttpException("Utilizador não encontrado ou não associado a um laboratório.");
-        }
-
-        // Buscar os orçamentos do laboratório do utilizador
-        $orcamentos = Orcamento::find()
-        ->select('orcamento.*')
-        ->where(['laboratorio_id' => $utilizador->idLab])
-        ->joinWith([
-            'estadoOrcamentos' => function ($query) {
-                $query->andWhere(['estado_orcamento.estado_id' => 1]); // Filtra pelo estado_id = 1 (aceito)
-            },
-            'estadoOrcamentos.estado' // Carrega os estados relacionados aos estados do orçamento
-        ])
-        ->with([
-            'servicos' => function ($query) {
-                $query->select(['servico.*', 'servico_orcamento.quantidade'])
-                      ->innerJoin('servico_orcamento', 'servico.id = servico_orcamento.servico_id');
-            },
-        ])
-        ->asArray()
-        ->all();
-       
-
-
-        if (empty($orcamentos)) {
-        throw new NotFoundHttpException("Não foram encontrados orçamentos para o laboratório do utilizador.");
-        }
-        return $orcamentos;
-    }
     // endPoint para listar todos os orçamentos
     public function actionIndex()
     {
