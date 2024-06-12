@@ -27,9 +27,81 @@ class OrcamentoController extends BaseRestController
         $actions = parent::actions();
 
         // Desabilitar as ações padrão de índice e visualização
-        unset($actions['index'], $actions['view'], $actions['create']);
+        unset($actions['index'], $actions['view'], $actions['create'], $actions['update'], $actions['delete']);
 
         return $actions;
+    }
+    public function actionCreate()
+    {                
+        // Obter o token da autorização dos cabeçalhos da solicitação
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        // Encontrar o user correspondente ao usuário autenticado
+        $user = User::findByAccessToken($authorizationHeader);
+        // Buscar o utilizador correspondente ao token
+        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
+        // Pegando os dados do corpo da requisição
+        $post = $this->request->post();
+        // Verificar se os campos necessários estão presentes no corpo da requisição
+        if (empty($post['descricao']) || empty($post['servico_orcamento'])) {
+            throw new BadRequestHttpException("Faltam campos obrigatórios.");
+        }
+        // Criar um novo objeto de orçamento
+        $model = new Orcamento();
+        $model->data_entrada = date('Y-m-d');
+        $model->utilizador_id = $utilizador->id;
+        $model->load($post, '');
+        // Salvar o novo orçamento
+        if ($model->save()) {
+            // Criar um novo objeto de estado do orçamento
+            $estadoOrcamento = new EstadoOrcamento();
+            $estadoOrcamento->orcamento_id = $model->id;
+            $estadoOrcamento->estado_id = 3;
+            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+            $estadoOrcamento->save();
+
+            for ($i = 0; $i < count($post['servico_orcamento']); $i++) {
+                $servicoOrcamento = new ServicoOrcamento();
+                $servicoOrcamento->orcamento_id = $model->id;
+                $servicoOrcamento->servico_id = $post['servico_orcamento'][$i]["servico_id"];
+                $servicoOrcamento->quantidade = $post['servico_orcamento'][$i]["quantidade"];
+                $servicoOrcamento->save();
+            }
+            return $model;
+        } else {
+            throw new BadRequestHttpException("Falha ao criar o orçamento.");
+        }
+    }
+    // endPoint para atualizar orcamentos
+    public function actionUpdate($id)
+    {
+        // Obter o token da autorização dos cabeçalhos da solicitação
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        // Encontrar o user correspondente ao usuário autenticado
+        $user = User::findByAccessToken($authorizationHeader);
+        // Buscar o utilizador correspondente ao token
+        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();       
+        $model = Orcamento::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
+        if($user->role_id == 1 || $utilizador->utilizador_id == $model->utilizador_id){
+            // Carregar os dados do corpo da requisição para o modelo
+            $requestData = Yii::$app->getRequest()->getBodyParams();
+            
+            // Remover os campos que não devem ser atualizados            
+            $requestData['id'] = $model -> id;
+            $requestData['data_entrada'] = $model -> data_entrada;
+            $requestData['utilizador_id'] = $model -> utilizador_id; 
+
+            // Carregar os dados do corpo da requisição para o modelo        
+            $model->load($requestData, '');
+            if ($model->save()) {
+                return $model;
+            } else {
+                return $model->getErrors();
+            }
+        }
+        throw new ForbiddenHttpException("Não tem permissão para atualizar este orçamento.");
     }
     // Endpoint personalizado para retornar o orçamento com base no utilizador_id
     public function actionOrcamentoPorUtilizadorId()
@@ -84,46 +156,7 @@ class OrcamentoController extends BaseRestController
         }
         return $orcamentos;
     }   
-    public function actionCreate()
-    {                
-        // Obter o token da autorização dos cabeçalhos da solicitação
-        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-        // Encontrar o user correspondente ao usuário autenticado
-        $user = User::findByAccessToken($authorizationHeader);
-        // Buscar o utilizador correspondente ao token
-        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
-        // Pegando os dados do corpo da requisição
-        $post = $this->request->post();
-        // Verificar se os campos necessários estão presentes no corpo da requisição
-        if (empty($post['descricao']) || empty($post['servico_orcamento'])) {
-            throw new BadRequestHttpException("Faltam campos obrigatórios.");
-        }
-        // Criar um novo objeto de orçamento
-        $model = new Orcamento();
-        $model->data_entrada = date('Y-m-d');
-        $model->utilizador_id = $utilizador->id;
-        $model->load($post, '');
-        // Salvar o novo orçamento
-        if ($model->save()) {
-            // Criar um novo objeto de estado do orçamento
-            $estadoOrcamento = new EstadoOrcamento();
-            $estadoOrcamento->orcamento_id = $model->id;
-            $estadoOrcamento->estado_id = 3;
-            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
-            $estadoOrcamento->save();
-
-            for ($i = 0; $i < count($post['servico_orcamento']); $i++) {
-                $servicoOrcamento = new ServicoOrcamento();
-                $servicoOrcamento->orcamento_id = $model->id;
-                $servicoOrcamento->servico_id = $post['servico_orcamento'][$i]["servico_id"];
-                $servicoOrcamento->quantidade = $post['servico_orcamento'][$i]["quantidade"];
-                $servicoOrcamento->save();
-            }
-            return $model;
-        } else {
-            throw new BadRequestHttpException("Falha ao criar o orçamento.");
-        }
-    }
+    
     public function actionFindOrcamentoById($idOrcamento)
     {
         // Obter o token da autorização dos cabeçalhos da solicitação
@@ -183,51 +216,6 @@ class OrcamentoController extends BaseRestController
         }
 
         return $orcamento;
-    }
-    public function actionUpdateEstadoByIdOrcamento($idOrcamento, $idEstado)
-    {
-        // Obter o token da autorização dos cabeçalhos da solicitação
-        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-        // Encontrar o user correspondente ao usuário autenticado
-        $user = User::findByAccessToken($authorizationHeader);
-        // Buscar os dados do utilizador
-        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
-       
-        // Verificar se o orçamento existe
-        $orcamento = Orcamento::find()->where(['id' => $idOrcamento])->one();
-        if (empty($orcamento)) {
-            throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para esse ID $idOrcamento.");
-        }
-        if($user->role_id == 1 || $orcamento->utilizador_id == $utilizador->id){
-            // Verificar o estado
-            for ($i=1; $i < 7; $i++) { 
-                if ($idEstado != $i) {
-                    throw new \yii\web\BadRequestHttpException("O tipo de estado foi recusado");
-                }
-            }  
-            // Criar uma nova instância de EstadoOrcamento
-            $estadoOrcamento = new EstadoOrcamento();
-            $estadoOrcamento->orcamento_id = $idOrcamento;
-            $estadoOrcamento->estado_id = $idEstado;
-            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
-
-            // Salvar o novo estado do orçamento
-            if ($estadoOrcamento->save()) {
-                $estado = Estado::find()->where(['id' => $idEstado])->one();
-                return [
-                    'success' => true,
-                    'message' => 'Estado do orçamento salvo com sucesso.',
-                    'estado' => $estado->estado,
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Falha ao salvar o estado.',
-                    'errors' => $estadoOrcamento->errors,
-                ];
-            }
-        }
-        throw new \yii\web\NotFoundHttpException("Não foi encontrado orçamento com ID $idOrcamento para o utilizador com ID $utilizador->id ou o orçamento não foi criado pelo usuário.");
     }
     //João
     public function actionOrcamentoPorLaboratorio()
@@ -302,25 +290,6 @@ class OrcamentoController extends BaseRestController
         $orcamentos = Orcamento::find()->all();
         return $orcamentos;
     }
-
-    // endPoint para atualizar orcamentos
-    public function actionUpdate($id)
-    {
-        $model = Orcamento::findOne($id);
-        if ($model === null) {
-            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
-        }
-
-        // Carregar os dados do corpo da requisição para o modelo
-        $model->load(Yii::$app->request->getBodyParams(), '');
-
-        if ($model->save()) {
-            return $model; 
-        } else {
-            return $model->getErrors();
-        }
-    }
-    
     public function actionUpdateOrcamentoLab($id)
     {
         $model = Orcamento::findOne($id);
