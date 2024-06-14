@@ -28,10 +28,22 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,
-            'viewPath' => '@app/mail',
-            // send all mails to a file by default.
-            'useFileTransport' => true,
+            'class' => \yii\symfonymailer\Mailer::class,            
+            'transport' => [
+        'scheme' => 'smtps',
+        'host' => 'smtp.gmail.com',
+        'username' => 'ipborcamentos@gmail.com',
+        'password' => 'wgab meud kuio ypgq',
+        'port' => 465,
+    ],
+            // 'viewPath' => '@common/mail',
+            // send all mails to a file by default. You have to set
+            // 'useFileTransport' to false and configure transport
+            // for the mailer to send real emails.
+            'useFileTransport' => false,
+            'messageConfig' => [ 
+        'from' => ['ipborcamentos@gmail.com' => 'IPB.Orçamentos'], 
+    ],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
@@ -74,7 +86,7 @@ $config = [
     'modules' => [
         'user' => [
             'class' => 'amnah\yii2\user\Module',
-            'requireEmail' => false,
+            'requireEmail' => true,
             'requireUsername' => true
         ],
         'api' => [
