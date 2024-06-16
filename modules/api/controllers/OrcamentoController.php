@@ -84,7 +84,7 @@ class OrcamentoController extends BaseRestController
         if ($model === null) {
             throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
         }
-        if($user->role_id == 1 || $utilizador->utilizador_id == $model->utilizador_id){
+        if($user->role_id == 1 || $utilizador -> idLab == $model->laboratorio_id || $utilizador->id == $model->utilizador_id ) {
             // Carregar os dados do corpo da requisição para o modelo
             $requestData = Yii::$app->getRequest()->getBodyParams();
             
@@ -96,6 +96,23 @@ class OrcamentoController extends BaseRestController
             // Carregar os dados do corpo da requisição para o modelo        
             $model->load($requestData, '');
             if ($model->save()) {
+                $estadoOrcamento = new EstadoOrcamento();
+                $estadoOrcamento->orcamento_id = $model->id;
+                $estadoOrcamento->estado_id = $requestData['estadoOrcamentos'];
+                $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+                $estadoOrcamento->save();
+
+                $servico = ServicoOrcamento::find()->where(['orcamento_id' => $model->id])->all();
+                for ($i = 0; $i < count($servico); $i++) {
+                    $servico[$i]->delete();
+                }
+                for ($i = 0; $i < count($requestData['servico_orcamento']); $i++) {
+                    $servicoOrcamento = new ServicoOrcamento();
+                    $servicoOrcamento->orcamento_id = $model->id;
+                    $servicoOrcamento->servico_id = $requestData['servico_orcamento'][$i]["servico_id"];
+                    $servicoOrcamento->quantidade = $requestData['servico_orcamento'][$i]["quantidade"];
+                    $servicoOrcamento->save();
+                }
                 return $model;
             } else {
                 return $model->getErrors();
@@ -155,8 +172,7 @@ class OrcamentoController extends BaseRestController
             throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador->id.");
         }
         return $orcamentos;
-    }   
-    
+    }     
     public function actionFindOrcamentoById($idOrcamento)
     {
         // Obter o token da autorização dos cabeçalhos da solicitação
