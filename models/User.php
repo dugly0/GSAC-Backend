@@ -36,6 +36,58 @@ use Yii;
  */
 class User extends AmnahUser
 {
+    public $newPassword;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['username', 'password'], 'required'],
+            [['username', 'password'], 'string', 'max' => 255],
+            [['email'], 'string', 'max' => 100],
+            [['created_at', 'updated_at'], 'safe'],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            // Hash the password if it's a new record or the password has been changed
+            if ($this->isNewRecord || $this->newPassword) {
+                $this->password = Yii::$app->security->generatePasswordHash($this->newPassword);
+                $this->auth_key = Yii::$app->security->generateRandomString();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Sets the password securely.
+     *
+     * @param string $password
+     */
+    public function setPassword($password)
+    {
+        $this->newPassword = $password;
+    }
+
+    /**
+     * Validates password.
+     *
+     * @param string $password
+     * @return bool
+     */
+    public function validatePassword($password)
+    {
+        return Yii::$app->getSecurity()->validatePassword($password, $this->password);
+    }
+
     /**
      * Gets query for [[Utilizadors]].
      *
@@ -45,12 +97,19 @@ class User extends AmnahUser
     {
         return $this->hasOne(Utilizador::class, ['user_id' => 'id']);
     }
+
+    /**
+     * Finds a user by access token.
+     *
+     * @param string $token
+     * @return static|null
+     */
     public static function findByAccessToken($token)
     {
-        // Cortar a string para obter apenas o token
+        // Remove the "Bearer " prefix from the token
         $token = str_replace('Bearer ', '', $token);
 
-        // Buscar o utilizador com o token fornecido
+        // Find the user by access token
         return static::find()->where(['access_token' => $token])->one();
     }
 }

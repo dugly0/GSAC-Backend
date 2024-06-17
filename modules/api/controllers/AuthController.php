@@ -28,27 +28,59 @@ class AuthController extends Controller
         return $behaviors;
     }
 
-    public function actionLogin()
+    public function actionUpdatePassword()
     {
-        $model = new LoginForm();
+        $request = Yii::$app->request;
+        $userId = $request->getBodyParam('id');
+        $newPassword = $request->getBodyParam('password');
 
-        if (
-            $model->load($this->request->post(), '') &&
-            $model->validate()
-        ) {
-            $user = $model->getUser();
+        try {
+            $user = User::findOne($userId);
+            if (!$user) {
+                throw new NotFoundHttpException('Usuário não encontrado.');
+            }
+
+            // Encripta a nova senha antes de salvar no banco de dados
+            $user->setPassword($newPassword);
+
+            // Salva o modelo User com a nova senha encriptada
+            if (!$user->save()) {
+                throw new \Exception('Erro ao salvar nova senha.');
+            }
+
+            return ['message' => 'Senha atualizada com sucesso.'];
+        } catch (\Exception $e) {
+            Yii::$app->response->statusCode = 500; // Internal Server Error
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function actionLogin()
+{
+    $model = new LoginForm();
+
+    if ($model->load(Yii::$app->request->post(), '') && $model->validate()) {
+        $user = $model->getUser();
+
+        // Verifica se o usuário existe e se a senha fornecida corresponde à senha armazenada
+        if ($user && $user->validatePassword($model->password)) {
+            // Autenticação bem-sucedida
             Yii::$app->user->login($user);
+
             return [
-                'access_token' =>
-                Yii::$app->user->identity->access_token, 'role_id' =>
-                Yii::$app->user->identity->role_id,
+                'access_token' => Yii::$app->user->identity->access_token,
+                'role_id' => Yii::$app->user->identity->role_id,
                 'user_id' => Yii::$app->user->identity->id,
             ];
         } else {
-            $model->validate();
-            return $model;
+            Yii::$app->response->statusCode = 401; // Unauthorized
+            return ['error' => 'Credenciais inválidas.'];
         }
+    } else {
+        Yii::$app->response->statusCode = 422; // Unprocessable Entity
+        return $model;
     }
+}
 
     public function actionRegister()
     {
