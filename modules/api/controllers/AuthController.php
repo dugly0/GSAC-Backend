@@ -13,47 +13,55 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
-class AuthController extends Controller{
+class AuthController extends Controller
+{
 
     public function behaviors()
     {
-      $behaviors = parent::behaviors();
+        $behaviors = parent::behaviors();
 
-      unset($behaviors['authenticator']);
+        unset($behaviors['authenticator']);
 
-      $behaviors['corsFilter'] = [
-         'class' => \yii\filters\Cors::class,
-      ];
-      return $behaviors;
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::class,
+        ];
+        return $behaviors;
     }
 
-    public function actionLogin(){
+    public function actionLogin()
+    {
         $model = new LoginForm();
 
-        if($model->load($this->request->post(),'') &&
-            $model->validate()){
-                $user = $model->getUser();
-                Yii::$app->user->login($user);
-                return['access_token' =>
+        if (
+            $model->load($this->request->post(), '') &&
+            $model->validate()
+        ) {
+            $user = $model->getUser();
+            Yii::$app->user->login($user);
+            return [
+                'access_token' =>
                 Yii::$app->user->identity->access_token, 'role_id' =>
-                Yii::$app->user->identity->role_id,];
-            }else{
-                $model->validate();
-                return $model;
-            }
+                Yii::$app->user->identity->role_id,
+                'user_id' => Yii::$app->user->identity->id,
+            ];
+        } else {
+            $model->validate();
+            return $model;
+        }
     }
-    
-    public function actionRegister(){
+
+    public function actionRegister()
+    {
         $user = new User();
         // set scenario
 
         $post = $this->request->post();
 
-        if(!$post){
+        if (!$post) {
             throw new ServerErrorHttpException('Erro a criar utilizador');
         }
-        if($user->load($post, '')){
-            if($user ->validate()){
+        if ($user->load($post, '')) {
+            if ($user->validate()) {
                 $role_id = Role::ROLE_USER;
 
                 $user->setRegisterAttributes($role_id);
@@ -61,9 +69,9 @@ class AuthController extends Controller{
 
                 if ($user->save()) {
                     $utilizador = new Utilizador();
-                    $utilizador->load($post, ''); 
-                    $utilizador->user_id = $user->id; 
-                    $utilizador->save(); 
+                    $utilizador->load($post, '');
+                    $utilizador->user_id = $user->id;
+                    $utilizador->save();
                 }
 
                 $this->afterRegister($user);

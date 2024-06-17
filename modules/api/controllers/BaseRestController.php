@@ -30,18 +30,18 @@ class BaseRestController extends ActiveController{
          'class' => AccessControl::class,
          'rules' => [ //add autorizações ao admin
              [
-               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role'],
+               'actions' => ['index', 'create', 'update', 'delete', 'view', 'set-role', 'view-id', 'update-id',],
                'allow' => true,
                'roles' => ['admin'],
             ],
             [
-               'actions' => ['index', 'view', 'create','update', 'orcamento-por-utilizador-id', 'find-estado-by-id-orcamento', 'update-estado-by-id-orcamento', 'find-servico-by-id-orcamento',
+               'actions' => ['index', 'view', 'view-id', 'update-id', 'create','update', 'orcamento-por-utilizador-id', 'find-estado-by-id-orcamento', 'update-estado-by-id-orcamento', 'find-servico-by-id-orcamento',
             ],
                'allow' => true,
                'roles' => ['@'],
             ],
             [
-               'actions' => ['index', 'view', 'create', 'orcamento-por-laboratorio', 'orcamento-por-laboratorio-com-estado-aceito', 'update-orcamento-lab', 'update-servico-orcamento-lab', 'create-estado-orcamento-lab'
+               'actions' => ['index', 'view', 'view-id', 'update-id', 'update', 'create', 'orcamento-por-laboratorio', 'orcamento-por-laboratorio-com-estado-aceito', 'update-orcamento-lab', 'update-servico-orcamento-lab', 'create-estado-orcamento-lab'
             ],
                'allow' => true,
                'roles' => ['lab'],

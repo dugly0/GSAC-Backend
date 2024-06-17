@@ -28,22 +28,22 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,            
+            'class' => \yii\symfonymailer\Mailer::class,
             'transport' => [
-        'scheme' => 'smtps',
-        'host' => 'smtp.gmail.com',
-        'username' => 'ipborcamentos@gmail.com',
-        'password' => 'wgab meud kuio ypgq',
-        'port' => 465,
-    ],
+                'scheme' => 'smtps',
+                'host' => 'smtp.gmail.com',
+                'username' => 'ipborcamentos@gmail.com',
+                'password' => 'wgab meud kuio ypgq',
+                'port' => 465,
+            ],
             // 'viewPath' => '@common/mail',
             // send all mails to a file by default. You have to set
             // 'useFileTransport' to false and configure transport
             // for the mailer to send real emails.
             'useFileTransport' => false,
-            'messageConfig' => [ 
-        'from' => ['ipborcamentos@gmail.com' => 'IPB.Orçamentos'], 
-    ],
+            'messageConfig' => [
+                'from' => ['ipborcamentos@gmail.com' => 'IPB.Orçamentos'],
+            ],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
@@ -55,25 +55,30 @@ $config = [
             ],
         ],
         'db' => $db,
-        
+
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                ['class' => 'yii\rest\UrlRule',
-                 'controller' => [
-                    'api/estadoorcamento',
-                    'api/laboratorio',
-                    'api/cliente',
-                    'api/servico',
-                    'api/servicoorcamento',
-                    'api/utilizador',
-                    'api/estado',
-                    'api/user',
-                    'api/orcamento',
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => [
+                        'api/estadoorcamento',
+                        'api/laboratorio',
+                        'api/cliente',
+                        'api/servico',
+                        'api/servicoorcamento',
+                        'api/utilizador',
+                        'api/estado',
+                        'api/user',
+                        'api/orcamento',
+                    ],
+                    'extraPatterns' => [
+                        'GET view-id' => 'view-id', // Rota personalizada para actionViewId
+                        'PUT update-id' => 'update-id', // Rota personalizada para actionUpdateId
+                    ],
+                    'pluralize' => false
                 ],
-                'pluralize' => false
-            ],
                 // Rota personalizada para a atualização de orçamento
                 'PUT api/orcamento/update/<id:\d+>' => 'api/orcamento/update',
                 'PUT api/orcamento/update-orcamento-lab/<id:\d+>' => 'api/orcamento/update-orcamento-lab',
@@ -81,7 +86,7 @@ $config = [
                 'POST api/orcamento/<orcamentoId:\d+>/create-estado-orcamento-lab' => 'api/orcamento/create-estado-orcamento-lab',
             ],
         ],
-        
+
     ],
     'modules' => [
         'user' => [
