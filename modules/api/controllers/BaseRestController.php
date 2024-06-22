@@ -35,7 +35,7 @@ class BaseRestController extends ActiveController{
                'roles' => ['admin'],
             ],
             [
-               'actions' => ['index', 'view', 'view-id', 'update-id', 'create','update', 'orcamento-por-utilizador-id', 'find-estado-by-id-orcamento', 'update-estado-by-id-orcamento', 'find-servico-by-id-orcamento',
+               'actions' => ['index', 'view', 'view-id', 'update-id', 'create','update', 'orcamento-por-utilizador-id', 'find-estado-by-id-orcamento', 'update-estado-by-id-orcamento', 'find-servico-by-id-orcamento', 'forgot'
             ],
                'allow' => true,
                'roles' => ['@'],

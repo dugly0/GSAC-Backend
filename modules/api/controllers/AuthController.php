@@ -2,6 +2,7 @@
 
 namespace app\modules\api\controllers;
 
+use amnah\yii2\user\models\forms\ForgotForm;
 use amnah\yii2\user\models\forms\LoginForm;
 use amnah\yii2\user\models\Role;
 use amnah\yii2\user\models\User;
@@ -135,6 +136,20 @@ class AuthController extends Controller
             }
         } else {
             Yii::$app->user->login($user);
+        }
+    }
+    public function actionForgot(){
+        
+        $model = new ForgotForm();
+
+        if ($model->load(Yii::$app->request->post(), '') && $model->validate()) {
+            if ($model->sendForgotEmail()) {
+                return ['message' => 'Um email com instruções para recuperar a senha foi enviado.'];
+            } else {
+                throw new \yii\web\ServerErrorHttpException('Erro ao enviar o email de recuperação de senha.');
+            }
+        } else {
+            return $model; // Retorna os erros de validação se houver
         }
     }
 }
