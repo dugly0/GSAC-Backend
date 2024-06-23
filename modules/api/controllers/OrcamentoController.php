@@ -401,6 +401,33 @@ class OrcamentoController extends BaseRestController
             return $servicoOrcamento->errors;
         }
     }
+    public function actionDeleteServicoOrcamento($id)
+    {
+         // Obter o token da autorização dos cabeçalhos da solicitação
+         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+         // Encontrar o user correspondente ao usuário autenticado
+         $user = User::findByAccessToken($authorizationHeader);
+         // Buscar o utilizador correspondente ao token
+         $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();       
+         $model = Orcamento::findOne($id);
+         if ($model === null) {
+             throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+         }
+         if($user->role_id == 1 || $utilizador -> idLab == $model->laboratorio_id || $utilizador->id == $model->utilizador_id ) {
+            // Buscar o registro na tabela servico_orcamento
+            $servicoOrcamento = ServicoOrcamento::find()->where(['id' => $id])->one();
+        
+            if ($servicoOrcamento) {
+                $servicoOrcamento->delete();
+                Yii::$app->response->statusCode = 200;
+                return ['message' => 'Serviço no orçamento removido com sucesso'];
+            }
+
+            throw new NotFoundHttpException("Serviço não encontrado no orçamento.");
+         } else {   
+            throw new ForbiddenHttpException("Você não tem permissão para remover este orçamento.");
+         }
+    }
 
     public function actionCreateEstadoOrcamentoLab($orcamentoId)
     {
