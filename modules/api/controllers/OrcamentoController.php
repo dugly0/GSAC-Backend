@@ -168,6 +168,16 @@ class OrcamentoController extends BaseRestController
             ->asArray()
             ->all();
 
+            foreach ($orcamentos as &$orcamento) {
+                $estadoAtual = null;
+                foreach ($orcamento['estadoOrcamentos'] as $estado) {
+                    if ($estadoAtual === null || $estado['id'] > $estadoAtual['id']) {
+                        $estadoAtual = $estado;
+                    }
+                }
+                $orcamento['estadoAtual'] = $estadoAtual;
+            }
+
         if (empty($orcamentos)) {
             throw new \yii\web\NotFoundHttpException("Não foram encontrados orçamentos para o utilizador com ID $utilizador->id.");
         }
