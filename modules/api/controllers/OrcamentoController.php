@@ -120,6 +120,32 @@ class OrcamentoController extends BaseRestController
         }
         throw new ForbiddenHttpException("Não tem permissão para atualizar este orçamento.");
     }
+    public function actionUpdateEstado()
+    {
+        // Obter o token da autorização dos cabeçalhos da solicitação
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        // Encontrar o user correspondente ao usuário autenticado
+        $user = User::findByAccessToken($authorizationHeader);
+        $bodyParams = Yii::$app->request->bodyParams;
+        $id = $bodyParams['orcamentoId'];
+        // Buscar o utilizador correspondente ao token
+        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();       
+        $model = Orcamento::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
+        if($user->role_id == 1 || $utilizador -> idLab == $model->laboratorio_id || $utilizador->id == $model->utilizador_id ) {
+            // Carregar os dados do corpo da requisição para o modelo
+            $requestData = Yii::$app->getRequest()->getBodyParams();           
+            $estadoOrcamento = new EstadoOrcamento();
+            $estadoOrcamento->orcamento_id = $model->id;
+            $estadoOrcamento->estado_id = $requestData['estadoOrcamentos'];
+            $estadoOrcamento->data = date('Y-m-d'); // Formato apenas com dia, mês e ano
+            $estadoOrcamento->save();
+            return $estadoOrcamento;            
+        }
+        throw new ForbiddenHttpException("Não tem permissão para atualizar este orçamento.");
+    }
     // Endpoint personalizado para retornar o orçamento com base no utilizador_id
     public function actionOrcamentoPorUtilizadorId()
     {
@@ -132,12 +158,12 @@ class OrcamentoController extends BaseRestController
             $orcamentos = Orcamento::find()            
             ->joinWith([
                 'estadoOrcamentos c' => function ($query) {
-                    $query->innerJoin('estado b', 'c.estado_id = b.id')
+                    $query->leftJoin('estado b', 'c.estado_id = b.id')
                           ->select(['b.*', 'c.*'])
                           ->orderBy(['c.id' => SORT_DESC]); // Ordena pela data em ordem decrescente
                 },
                 'servicoOrcamentos e' => function ($query) {
-                    $query->innerJoin('servico d', 'e.servico_id = d.id')
+                    $query->leftJoin('servico d', 'e.servico_id = d.id')
                           ->select(['d.*', 'e.*']);
                 }
             ])

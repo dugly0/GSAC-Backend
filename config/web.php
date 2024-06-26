@@ -86,6 +86,7 @@ $config = [
                 'POST api/orcamento/<orcamentoId:\d+>/create-estado-orcamento-lab' => 'api/orcamento/create-estado-orcamento-lab',
                 'PUT api/user/forgot/<email:\d+>' => 'api/user/forgot',
                 'DELETE api/orcamento/delete-servico-orcamento' => 'api/orcamento/delete-servico-orcamento',
+                'PUT api/orcamento/update-estado' => 'api/orcamento/update-estado',
 
                 
 
