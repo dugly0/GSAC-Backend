@@ -400,37 +400,59 @@ class OrcamentoController extends BaseRestController
             Yii::$app->response->statusCode = 422;
             return $servicoOrcamento->errors;
         }
-    }
-    public function actionDeleteServicoOrcamento($id)
+    } 
+    public function actionDeleteServicoOrcamento()
     {
-         // Obter o token da autorização dos cabeçalhos da solicitação
-         $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
-         // Encontrar o user correspondente ao usuário autenticado
-         $user = User::findByAccessToken($authorizationHeader);
-         // Buscar o utilizador correspondente ao token
-         $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();       
-         $model = Orcamento::findOne($id);
-         if ($model === null) {
-             throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
-         }
-         if($user->role_id == 1 || $utilizador -> idLab == $model->laboratorio_id || $utilizador->id == $model->utilizador_id ) {
-            // Buscar o registro na tabela servico_orcamento
+       
+        $authorizationHeader = Yii::$app->getRequest()->getHeaders()->get('Authorization');
+        $token = str_replace('Bearer ', '', $authorizationHeader);
+
+        if (!$token) {
+            Yii::error("Token não encontrado no cabeçalho de autorização.");
+            throw new ForbiddenHttpException("Token não encontrado.");
+        }
+
+        $user = User::findByAccessToken($token);
+
+        if (!$user) {
+            Yii::error("Usuário não encontrado para o token fornecido.");
+            throw new ForbiddenHttpException("Token inválido.");
+        }
+
+        $utilizador = Utilizador::find()->where(['user_id' => $user->id])->one();
+
+        $bodyParams = Yii::$app->request->bodyParams;
+        $id = $bodyParams['id'];
+
+        $model = ServicoOrcamento::findOne($id);
+
+        if ($model === null) {
+            Yii::error("Orçamento com ID $id não encontrado.");
+            throw new NotFoundHttpException("O orçamento com ID $id não foi encontrado.");
+        }
+
+        if ($user->role_id == 1 || $utilizador->idLab == $model->laboratorio_id || $utilizador->id == $model->utilizador_id) {
             $servicoOrcamento = ServicoOrcamento::find()->where(['id' => $id])->one();
-        
+
             if ($servicoOrcamento) {
                 $servicoOrcamento->delete();
                 Yii::$app->response->statusCode = 200;
                 return ['message' => 'Serviço no orçamento removido com sucesso'];
             }
 
+            Yii::error("Serviço com ID $id não encontrado no orçamento.");
             throw new NotFoundHttpException("Serviço não encontrado no orçamento.");
-         } else {   
+        } else {
+            Yii::error("Usuário não autorizado a remover o orçamento com ID $id.");
             throw new ForbiddenHttpException("Você não tem permissão para remover este orçamento.");
-         }
+        }
     }
 
-    public function actionCreateEstadoOrcamentoLab($orcamentoId)
+
+    public function actionCreateEstadoOrcamentoLab()
     {
+        $bodyParams = Yii::$app->request->bodyParams;
+        $orcamentoId = $bodyParams['orcamentoId'];
         // Buscar o orçamento
         $orcamento = Orcamento::findOne($orcamentoId);
         if (!$orcamento) {
@@ -464,7 +486,7 @@ class OrcamentoController extends BaseRestController
         $estadoOrcamento->data = date('Y-m-d'); // Data atual
 
         // Carregar os dados da requisição (estado_id)
-        $estadoOrcamento->load(Yii::$app->request->bodyParams, '');
+        $estadoOrcamento->load(Yii::$app->request->bodyParams["estado_id"], '');
 
         // Validação verificar se o estado_id é válido
         if (!Estado::findOne($estadoOrcamento->estado_id)) {
