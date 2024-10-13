@@ -29,6 +29,7 @@ class AuthController extends Controller
         return $behaviors;
     }
 
+
     public function actionUpdatePassword()
     {
         $request = Yii::$app->request;
