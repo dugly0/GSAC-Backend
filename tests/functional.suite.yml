@@ -12,3 +12,10 @@ modules:
       - Filesystem
       - Yii2
       - Asserts
+      - Db:
+            dsn: 'mysql:host=localhost;dbname=test_db'
+            user: 'admin'
+            password: '123456'
+            dump: 'tests/_data/dump.sql'
+            populate: true
+            cleanup: true
