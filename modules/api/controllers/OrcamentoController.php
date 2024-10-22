@@ -106,11 +106,11 @@ class OrcamentoController extends BaseRestController
                 for ($i = 0; $i < count($servico); $i++) {
                     $servico[$i]->delete();
                 }
-                for ($i = 0; $i < count($requestData['servico_orcamento']); $i++) {
+                for ($i = 0; $i < count($requestData['servicoOrcamentos']); $i++) {
                     $servicoOrcamento = new ServicoOrcamento();
                     $servicoOrcamento->orcamento_id = $model->id;
-                    $servicoOrcamento->servico_id = $requestData['servico_orcamento'][$i]["servico_id"];
-                    $servicoOrcamento->quantidade = $requestData['servico_orcamento'][$i]["quantidade"];
+                    $servicoOrcamento->servico_id = $requestData['servicoOrcamentos'][$i]["servico_id"];
+                    $servicoOrcamento->quantidade = $requestData['servicoOrcamentos'][$i]["quantidade"];
                     $servicoOrcamento->save();
                 }
                 return $model;

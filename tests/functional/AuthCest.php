@@ -37,4 +37,13 @@ class AuthCest
         // Verifica que a resposta é do tipo JSON
         $I->seeResponseIsJson();
     }
+    public function testLoginFailed(FunctionalTester $I)
+    {
+        $body = [
+            'email' => 'neo',
+            'password' => 'neo123'
+        ];
+        $I->sendPOST('/api/auth/login', $body);
+        $I->seeResponseCodeIs(422);
+    }
 }
