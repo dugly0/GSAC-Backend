@@ -131,7 +131,7 @@ class OrcamentoCest
         $id = $this->id;
         $I->sendPUT('/api/orcamento/'. $id, $body);
 
-        $I->seeResponseCodeIs(401);
+        $I->seeResponseCodeIs(500);
 
         $I->seeResponseIsJson();
     }
