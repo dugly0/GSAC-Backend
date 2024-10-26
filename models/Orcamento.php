@@ -72,7 +72,23 @@ class Orcamento extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getEstadoOrcamentos()
+    public function fields()
+    {
+        // Pega os campos padrões do modelo (todos os atributos da tabela Orcamento)
+        $fields = parent::fields();
+
+        // Adiciona os relacionamentos manualmente
+        $fields['estadoOrcamento'] = function () {
+            return $this->estadoOrcamento; // Adiciona a relação de EstadoOrcamentos
+        };
+
+        $fields['servicoOrcamento'] = function () {
+            return $this->servicoOrcamento; // Adiciona a relação de ServicoOrcamentos
+        };
+
+        return $fields;
+    }
+     public function getEstadoOrcamento()
     {
         return $this->hasMany(EstadoOrcamento::class, ['orcamento_id' => 'id']);
     }
@@ -96,7 +112,7 @@ class Orcamento extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getServicoOrcamentos()
+    public function getServicoOrcamento()
     {
         return $this->hasMany(ServicoOrcamento::class, ['orcamento_id' => 'id']);
     }
@@ -106,7 +122,7 @@ class Orcamento extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getServicos()
+    public function getServico()
     {
         return $this->hasMany(Servico::class, ['id' => 'servico_id'])->viaTable('servico_orcamento', ['orcamento_id' => 'id']);
     }
