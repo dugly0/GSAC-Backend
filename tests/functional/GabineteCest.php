@@ -46,5 +46,19 @@ class GabineteCest
             $I->assertArrayHasKey('banned_reason', $user);
             $I->assertArrayHasKey('utilizador', $user);
         }
-    } 
+    }   
+    public function testGetUsersUnauthorized(FunctionalTester $I)
+    {
+        $I->haveHttpHeader('Authorization', 'Bearer teste');
+        
+        $I->sendPOST('/api/user');
+
+        $I->seeResponseCodeIs(401);
+
+        $I->seeResponseContainsJson([
+            "name"=> "Unauthorized",
+            "message"=> "Your request was made with invalid credentials.",
+            "status"=> 401
+        ]);
+    }
 }
