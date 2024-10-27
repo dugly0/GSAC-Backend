@@ -67,21 +67,6 @@ class UserController extends BaseRestController
         return $data;
     }
 
-    public function actionSetRole($id, $role_id)
-    {
-        $user = $this->findModel($id);
-        if ($user && Yii::$app->user->can('admin')) {
-            $user->role_id = $role_id;
-            if ($user->save()) {
-                return ['message' => 'Função alterada com sucesso'];
-            } else {
-                return ['errors' => $user->errors];
-            }
-        } else {
-            throw new ForbiddenHttpException('Você não tem permissão para realizar essa ação.');
-        }
-    }
-
     public function actionDelete($id)
     {
         $transaction = Yii::$app->db->beginTransaction();
