@@ -61,4 +61,87 @@ class GabineteCest
             "status"=> 401
         ]);
     }
+
+    public function testRegisterUserSuccess(FunctionalTester $I)
+    {
+        // Dados válidos para o novo usuário
+        $userData = [
+            'email' => 'test@example.com',
+            'username' => 'testuser',
+            'password' => 'Password123',
+            'role_id' => 2, // Supondo que o ID 2 é válido para o teste
+        ];
+
+        // Configurando o cabeçalho de autorização
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+
+        // Enviando a requisição POST para o endpoint de registro
+        $I->sendPOST('/api/user/register', $userData);
+
+        // Verificando se o status de resposta é 200 (OK)
+        $I->seeResponseCodeIs(200);
+
+        // Verificando se a resposta contém os dados do usuário registrado
+        $I->seeResponseContainsJson([
+            'email' => $userData['email'],
+            'username' => $userData['username'],
+        ]);
+
+        // Validando o retorno JSON e que contém o ID do usuário registrado
+        $I->seeResponseJsonMatchesJsonPath('$.id');
+        $I->seeResponseJsonMatchesJsonPath('$.role_id');
+    }
+
+    public function testRegisterUserInvalidRole(FunctionalTester $I)
+    {
+        // Dados com um role_id inválido
+        $userData = [
+            'email' => 'test_invalid@example.com',
+            'username' => 'testuser_invalid',
+            'password' => 'Password123',
+            'role_id' => 9999, // ID de role inválido para o teste
+        ];
+
+        // Configurando o cabeçalho de autorização
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+
+        // Enviando a requisição POST para o endpoint de registro
+        $I->sendPOST('/api/user/register', $userData);
+
+        // Verificando se o status de resposta é 400 (Bad Request)
+        $I->seeResponseCodeIs(400);
+
+        // Verificando se a resposta contém a mensagem de erro
+        $I->seeResponseContainsJson([
+            'name' => 'Bad Request',
+            'message' => 'Role inválido.',
+        ]);
+    }
+
+    public function testRegisterUserMissingData(FunctionalTester $I)
+    {
+        Yii::$app->mailer->useFileTransport = true;
+        // Dados incompletos para registro
+        $userData = [
+            'username' => 'missingemailuser',
+            // 'password' => 'Password123',
+            "email" => "a58070@alunos.ipb.pt",
+        ];
+
+        // Configurando o cabeçalho de autorização
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+
+        // Enviando a requisição POST para o endpoint de registro
+        $I->sendPOST('/api/user/register', $userData);
+
+        // Verificando se o status de resposta é 422 (Data Validation Failed)
+        $I->seeResponseCodeIs(422);
+
+        // Verificando se a resposta contém a mensagem de erro apropriada
+        $I->seeResponseContainsJson([
+            "field" => "password",
+            "message"=> "Password cannot be blank."
+            
+        ]);
+    }
 }
