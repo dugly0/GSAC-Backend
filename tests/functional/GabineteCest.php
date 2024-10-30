@@ -62,6 +62,49 @@ class GabineteCest
         ]);
     }
 
+    public function testDeleteUserSuccess(FunctionalTester $I)
+    {
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+        $utilizadorId = 3;
+
+        // Requisição HTTP DELETE
+        $I->sendDELETE("/api/user/{$utilizadorId}");
+        // Código 204 confirmando o user excluido
+        $I->seeResponseCodeIs(204);
+
+        // Requisição HTTP GET
+        $I->sendGET("/api/user/{$utilizadorId}");
+        // Código 404 indicando que o utilizador não foi encontrado
+        $I->seeResponseCodeIs(404);
+    }
+
+    public function testDeleteUserUnauthorized(FunctionalTester $I)
+    {
+        $utilizadorId = 3;
+        $I->haveHttpHeader('Authorization', 'Bearer teste');
+        $I->sendPOST("/api/user/{$utilizadorId}");
+        $I->seeResponseCodeIs(401);
+        $I->seeResponseContainsJson([
+            "name" => "Unauthorized",
+            "message" => "Your request was made with invalid credentials.",
+            "status" => 401
+        ]);
+    }
+
+
+    public function testDeleteUserNotFound(FunctionalTester $I)
+    {
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+        $utilizadorId = 999;
+        $I->sendDELETE("/api/user/{$utilizadorId}");
+        $I->seeResponseCodeIs(404);
+        $I->seeResponseContainsJson([
+            "name" => "Not Found",
+            "message" => "Utilizador não encontrado.",
+            "status" => 404
+        ]);
+    }
+
     public function testRegisterUserSuccess(FunctionalTester $I)
     {
         // Dados válidos para o novo usuário
