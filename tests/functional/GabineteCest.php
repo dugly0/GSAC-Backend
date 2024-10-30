@@ -61,4 +61,22 @@ class GabineteCest
             "status"=> 401
         ]);
     }
+
+    public function testDeleteUserSuccess(FunctionalTester $I)
+    {
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+        $utilizadorId = 3;
+
+        // Requisição HTTP DELETE
+        $I->sendDELETE("/api/user/{$utilizadorId}");
+        // Código 204 confirmando o user excluido
+        $I->seeResponseCodeIs(204);
+
+        // Requisição HTTP GET
+        $I->sendGET("/api/user/{$utilizadorId}");
+        // Código 404 indicando que o utilizador não foi encontrado
+        $I->seeResponseCodeIs(404);
+    }
+
+    
 }
