@@ -37,6 +37,7 @@ class AuthCest
         // Verifica que a resposta é do tipo JSON
         $I->seeResponseIsJson();
     }
+    
     public function testLoginFailedPass(FunctionalTester $I)
     {
         $body = [
@@ -72,7 +73,7 @@ class AuthCest
             "username" => "newuser",
             "newPassword"=> "123456",
             "nome"=> "David",
-            "nif"=>"123456789a",
+            "nif"=>"123456789",
             "cod_postal"=> "1234567",
             "endereco"=> "Endereço do Usuário",
             "telefone"=> "999 999 999",
@@ -85,6 +86,79 @@ class AuthCest
 
     // Verifica se o código de resposta é 200 (OK)
     $I->seeResponseCodeIs(200);
+
+    // Verifica que a resposta é do tipo JSON
+    $I->seeResponseIsJson();
+}
+public function testRegisterUser(FunctionalTester $I)
+{
+    // Corpo da requisição JSON para registro de um usuário
+    $body = [
+        
+            "username" => "neo",
+            "newPassword"=> "123456",
+            "nome"=> "David",
+            "nif"=>"123456789",
+            "cod_postal"=> "1234567",
+            "endereco"=> "Endereço do Usuário",
+            "telefone"=> "999 999 999",
+            "email"=> "newuser@example.com"
+        
+    ];
+
+    // Envia uma requisição POST para a rota de registro
+    $I->sendPOST('/api/auth/register', $body);
+
+    // Verifica se o código de resposta é 422
+    $I->seeResponseCodeIs(422);
+
+    // Verifica que a resposta é do tipo JSON
+}
+public function testRegisterEmail(FunctionalTester $I)
+{
+    // Corpo da requisição JSON para registro de um usuário
+    $body = [
+        
+            "username" => "newuser",
+            "newPassword"=> "123456",
+            "nome"=> "David",
+            "nif"=>"123456789",
+            "cod_postal"=> "1234567",
+            "endereco"=> "Endereço do Usuário",
+            "telefone"=> "999 999 999",
+            "email"=> "neo@neo.com"
+        
+    ];
+
+    // Envia uma requisição POST para a rota de registro
+    $I->sendPOST('/api/auth/register', $body);
+
+    // Verifica se o código de resposta é 422
+    $I->seeResponseCodeIs(422);
+
+    // Verifica que a resposta é do tipo JSON
+}
+public function testRegisterFailedNif(FunctionalTester $I)
+{
+    // Corpo da requisição JSON para registro de um usuário
+    $body = [
+        
+            "username" => "newuser",
+            "newPassword"=> "123456",
+            "nome"=> "David",
+            "nif"=>"123456789a",
+            "cod_postal"=> "1234567",
+            "endereco"=> "Endereço do Usuário",
+            "telefone"=> "999 999 999",
+            "email"=> "newuser@example.com"
+        
+    ];
+
+    // Envia uma requisição POST para a rota de registro
+    $I->sendPOST('/api/auth/register', $body);
+
+    // Verifica se o código de resposta é 500 
+    $I->seeResponseCodeIs(500);
 
     // Verifica que a resposta é do tipo JSON
     $I->seeResponseIsJson();
