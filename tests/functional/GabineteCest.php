@@ -120,7 +120,7 @@ class GabineteCest
 
     public function testRegisterUserMissingData(FunctionalTester $I)
     {
-        Yii::$app->mailer->useFileTransport = true;
+        
         // Dados incompletos para registro
         $userData = [
             'username' => 'missingemailuser',
@@ -144,4 +144,134 @@ class GabineteCest
             
         ]);
     }
+
+    public function testRegisterUserWithInvalidToken(FunctionalTester $I)
+{
+    // Dados válidos para o registro do usuário
+    $userData = [
+        'email' => 'invalidtoken@example.com',
+        'username' => 'invalidtokenuser',
+        'password' => 'Password123',
+    ];
+
+    // Configurando um cabeçalho de autorização com um token incorreto
+    $I->haveHttpHeader('Authorization', 'Bearer token_invalido');
+
+    // Enviando a requisição POST para o endpoint de registro
+    $I->sendPOST('/api/user/register', $userData);
+
+    // Verificando se o status de resposta é 401 (Unauthorized)
+    $I->seeResponseCodeIs(401);
+
+    // Verificando se a resposta contém a mensagem de erro de autorização
+    $I->seeResponseContainsJson([
+        "name" => "Unauthorized",
+        "message" => "Your request was made with invalid credentials.",
+        "status" => 401,
+    ]);
+}
+
+public function testUpdateUserSuccess(FunctionalTester $I)
+{
+    // Dados válidos para atualização do usuário
+    $userId = 2; // ID do usuário que será atualizado
+    $updateData = [
+        
+        'username' => 'updateduser',
+        'password' => 'NewPassword123',
+    ];
+
+    // Configurando o cabeçalho de autorização
+    $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+
+    // Enviando a requisição PUT para o endpoint de atualização
+    $I->sendPUT("/api/user/{$userId}", $updateData);
+
+    // Verificando se o status de resposta é 200 (OK)
+    $I->seeResponseCodeIs(200);
+
+    // Verificando se a resposta contém os dados atualizados do usuário
+    $I->seeResponseContainsJson([
+        'message' => "Informações atualizadas com sucesso"
+    ]);
+}
+
+public function testUpdateUserInvalidData(FunctionalTester $I)
+    {
+        
+        $userId = 10; // ID do usuário que será atualizado
+        $updateData = [
+            'username' => 'invaliduser', 
+            'password' => 'NewPassword123',
+            'nif' => 'teste'
+        ];
+
+        // Configurando o cabeçalho de autorização
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+
+        // Enviando a requisição PUT para o endpoint de atualização
+        $I->sendPUT("/api/user/{$userId}", $updateData);
+
+        // Verificando se o status de resposta é 422 (Unprocessable Entity)
+        $I->seeResponseCodeIs(422);
+
+        // Verificando se a resposta contém a mensagem de erro apropriada
+        $I->seeResponseContainsJson([
+            "nif" => [
+            "Nif must be an integer."
+        ]
+        ]);
+    }
+
+    public function testUpdateUserNonExistentId(FunctionalTester $I)
+    {
+        // Dados válidos para atualização do usuário inexistente
+        $userId = 9000; // ID de um usuário que não existe
+        $updateData = [
+            'email' => 'nonexistent@example.com',
+            'username' => 'nonexistentuser',
+            'password' => 'NewPassword123',
+        ];
+    
+        // Configurando o cabeçalho de autorização
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
+    
+        // Enviando a requisição PUT para o endpoint de atualização com um ID inexistente
+        $I->sendPUT("/api/user/{$userId}", $updateData);
+    
+        // Verificando se o status de resposta é 404 (Not Found)
+        $I->seeResponseCodeIs(404);
+    
+        // Verificando se a resposta contém uma mensagem de erro apropriada
+        $I->seeResponseContainsJson([
+            "name" => "Not Found",
+            "message" => "Utilizador não encontrado.",
+        ]);
+    }
+public function testUpdateUserWithInvalidToken(FunctionalTester $I)
+{
+    // Dados válidos para atualização do usuário
+    $userId = 2; // ID do usuário que será atualizado
+    $updateData = [
+        'email' => 'invalidtoken@example.com',
+        'username' => 'invalidtokenuser',
+        'password' => 'Password123',
+    ];
+
+    // Configurando um cabeçalho de autorização com um token incorreto
+    $I->haveHttpHeader('Authorization', 'Bearer token_invalido');
+
+    // Enviando a requisição PUT para o endpoint de atualização
+    $I->sendPUT("/api/user/{$userId}", $updateData);
+
+    // Verificando se o status de resposta é 401 (Unauthorized)
+    $I->seeResponseCodeIs(401);
+
+    // Verificando se a resposta contém a mensagem de erro de autorização
+    $I->seeResponseContainsJson([
+        "name" => "Unauthorized",
+        "message" => "Your request was made with invalid credentials.",
+        "status" => 401,
+    ]);
+}
 }
