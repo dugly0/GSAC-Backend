@@ -87,5 +87,21 @@ public function testForgot(FunctionalTester $I)
         // Verifica que a resposta é do tipo JSON
         $I->seeResponseIsJson();
     }
+    public function testForgoterro(FunctionalTester $I)
+    {
+        // Corpo da requisição JSON para recuperação de senha
+        $body = [
+            'email' => 'example@example.com'
+        ];
+
+        // Envia uma requisição POST para a rota de recuperação de senha
+        $I->sendPOST('/api/auth/forgot', $body);
+
+        // Verifica se o código de resposta é 422 
+        $I->seeResponseCodeIs(422);
+
+        // Verifica que a resposta é do tipo JSON
+        $I->seeResponseIsJson();
+    }
 
 }
