@@ -78,5 +78,17 @@ class GabineteCest
         $I->seeResponseCodeIs(404);
     }
 
+    public function testDeleteUserNotFound(FunctionalTester $I)
+    {
+        $I->haveHttpHeader(authorization_ok);
+        $utilizadorId = 999;
+        $I->sendDELETE("/api/user/{$utilizadorId}");
+        $I->seeResponseCodeIs(404);
+        $I->seeResponseContainsJson([
+            "name" => "Not Found",
+            "message" => "Utilizador não encontrado.",
+            "status" => 404
+        ]);
+    }
     
 }
