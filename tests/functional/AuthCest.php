@@ -37,7 +37,7 @@ class AuthCest
         // Verifica que a resposta é do tipo JSON
         $I->seeResponseIsJson();
     }
-    public function testLoginFailed(FunctionalTester $I)
+    public function testLoginFailedPass(FunctionalTester $I)
     {
         $body = [
             'email' => 'neo',
@@ -45,6 +45,24 @@ class AuthCest
         ];
         $I->sendPOST('/api/auth/login', $body);
         $I->seeResponseCodeIs(422);
+        $I->seeResponseContainsJson([
+            "field"=> "password",
+            "message"=> "Incorrect password"
+        ]);
+        
+    }
+    public function testLoginFailedUser(FunctionalTester $I)
+    {
+        $body = [
+            'email' => 'neo123',
+            'password' => 'neo'
+        ];
+        $I->sendPOST('/api/auth/login', $body);
+        $I->seeResponseCodeIs(422);
+        $I->seeResponseContainsJson([
+            "field"=> "email",
+            "message"=> "Email / Username not found"
+        ]);
     }
     public function testRegister(FunctionalTester $I)
 {
@@ -54,7 +72,7 @@ class AuthCest
             "username" => "newuser",
             "newPassword"=> "123456",
             "nome"=> "David",
-            "nif"=>"123456789",
+            "nif"=>"123456789a",
             "cod_postal"=> "1234567",
             "endereco"=> "Endereço do Usuário",
             "telefone"=> "999 999 999",
