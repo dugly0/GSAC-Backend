@@ -78,9 +78,23 @@ class GabineteCest
         $I->seeResponseCodeIs(404);
     }
 
+    public function testDeleteUserUnauthorized(FunctionalTester $I)
+    {
+        $utilizadorId = 3;
+        $I->haveHttpHeader('Authorization', 'Bearer teste');
+        $I->sendPOST("/api/user/{$utilizadorId}");
+        $I->seeResponseCodeIs(401);
+        $I->seeResponseContainsJson([
+            "name" => "Unauthorized",
+            "message" => "Your request was made with invalid credentials.",
+            "status" => 401
+        ]);
+    }
+
+
     public function testDeleteUserNotFound(FunctionalTester $I)
     {
-        $I->haveHttpHeader(authorization_ok);
+        $I->haveHttpHeader('Authorization', 'Bearer ' . $this->token_user_admin);
         $utilizadorId = 999;
         $I->sendDELETE("/api/user/{$utilizadorId}");
         $I->seeResponseCodeIs(404);
