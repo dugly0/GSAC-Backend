@@ -90,6 +90,62 @@ class AuthCest
     // Verifica que a resposta é do tipo JSON
     $I->seeResponseIsJson();
 }
+public function testForgot(FunctionalTester $I)
+    {
+        // Corpo da requisição JSON para recuperação de senha
+        $body = [
+            'email' => 'neo@neo.com'
+        ];
+
+        // Envia uma requisição POST para a rota de recuperação de senha
+        $I->sendPOST('/api/auth/forgot', $body);
+
+        // Verifica se o código de resposta é 422 
+        $I->seeResponseCodeIs(200);
+
+        // Verifica que a resposta é do tipo JSON
+        $I->seeResponseIsJson();
+    }
+    public function testForgoterro(FunctionalTester $I)
+    {
+        // Corpo da requisição JSON para recuperação de senha
+        $body = [
+            'email' => 'example@example.com'
+        ];
+
+        // Envia uma requisição POST para a rota de recuperação de senha
+        $I->sendPOST('/api/auth/forgot', $body);
+
+        // Verifica se o código de resposta é 422 
+        $I->seeResponseCodeIs(422);
+
+        // Verifica que a resposta é do tipo JSON
+        $I->seeResponseIsJson();
+    }
+    public function testLoginDesativactedAccount(FunctionalTester $I)
+    {
+        // Corpo da requisição JSON
+        $body = [
+            'email' => 'gabinete1',
+            'password' => '123456'
+        ];
+
+        // Envia uma requisição POST para a rota de login
+        $I->sendPOST('/api/auth/login', $body);
+
+        // Verifica se o código de resposta é 200 (OK)
+        $I->seeResponseCodeIs(422);
+
+        // Verifica se a resposta contém o token de acesso e outros campos esperados
+        $I->seeResponseContainsJson([
+            "field"=> "email",
+            "message"=> "Confirmation email resent"
+        ]);
+
+        // Verifica que a resposta é do tipo JSON
+        $I->seeResponseIsJson();
+    }
+    
 public function testRegisterUser(FunctionalTester $I)
 {
     // Corpo da requisição JSON para registro de um usuário
