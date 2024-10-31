@@ -103,5 +103,29 @@ public function testForgot(FunctionalTester $I)
         // Verifica que a resposta é do tipo JSON
         $I->seeResponseIsJson();
     }
+    public function testLoginDesativactedAccount(FunctionalTester $I)
+    {
+        // Corpo da requisição JSON
+        $body = [
+            'email' => 'gabinete1',
+            'password' => '123456'
+        ];
+
+        // Envia uma requisição POST para a rota de login
+        $I->sendPOST('/api/auth/login', $body);
+
+        // Verifica se o código de resposta é 200 (OK)
+        $I->seeResponseCodeIs(422);
+
+        // Verifica se a resposta contém o token de acesso e outros campos esperados
+        $I->seeResponseContainsJson([
+            "field"=> "email",
+            "message"=> "Confirmation email resent"
+        ]);
+
+        // Verifica que a resposta é do tipo JSON
+        $I->seeResponseIsJson();
+    }
+    
 
 }
