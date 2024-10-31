@@ -107,6 +107,9 @@ class AuthController extends Controller
                     $utilizador->user_id = $user->id;
                     $utilizador->save();
                 }
+                if(!$utilizador->save()){
+                    $user->delete();
+                }
 
                 $this->afterRegister($user);
             }
