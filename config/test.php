@@ -29,7 +29,39 @@ return [
         ],
         'urlManager' => [
             'enablePrettyUrl' => true,
-            'showScriptName' => true,
+            'showScriptName' => false,
+            'rules' => [
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => [
+                        'api/estadoorcamento',
+                        'api/laboratorio',
+                        'api/cliente',
+                        'api/servico',
+                        'api/servicoorcamento',
+                        'api/utilizador',
+                        'api/estado',
+                        'api/user',
+                        'api/orcamento',
+                    ],
+                    'extraPatterns' => [
+                        'GET view-id' => 'view-id', // Rota personalizada para actionViewId
+                        'PUT update-id' => 'update-id', // Rota personalizada para actionUpdateId
+                    ],
+                    'pluralize' => false
+                ],
+                // Rota personalizada para a atualização de orçamento
+                'PUT api/orcamento/update/<id:\d+>' => 'api/orcamento/update',
+                'PUT api/orcamento/update-orcamento-lab/<id:\d+>' => 'api/orcamento/update-orcamento-lab',
+                'PUT api/orcamento/<orcamentoId:\d+>/servico-orcamento-lab/<servicoId:\d+>' => 'api/orcamento/update-servico-orcamento-lab',
+                'POST api/orcamento/<orcamentoId:\d+>/create-estado-orcamento-lab' => 'api/orcamento/create-estado-orcamento-lab',
+                'PUT api/user/forgot/<email:\d+>' => 'api/user/forgot',
+                'DELETE api/orcamento/delete-servico-orcamento' => 'api/orcamento/delete-servico-orcamento',
+                'PUT api/orcamento/update-estado' => 'api/orcamento/update-estado',
+
+                
+
+            ],
         ],
         'request' => [
             'cookieValidationKey' => 'test',
