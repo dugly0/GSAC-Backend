@@ -3,7 +3,7 @@
 class UserCest
 {
     // Propriedades da classe para armazenar os tokens
-    public $token_user_admin = "wK9DpRsBpCPjxyBTzkJ1fBU2-pbpaTyq";
+    public $token_user_admin = "LnkeNnnbkd3N5WZiYOR_9RE8k33nK1RX";
 
     public function testGetUsers(FunctionalTester $I)
     {

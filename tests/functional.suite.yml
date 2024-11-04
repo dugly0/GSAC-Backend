@@ -3,9 +3,9 @@ actor: FunctionalTester
 modules:
   enabled:
     - Yii2:
-        configFile: "path/to/config/test.php" # Ajuste para o seu arquivo de configuração de testes
+        configFile: "config/test.php" # Ajuste para o seu arquivo de configuração de testes
     - REST:
-        depends: PhpBrowser
+        depends: Yii2
         url: "http://localhost:8080" # A URL base da sua API
     - Asserts
     - Db:
