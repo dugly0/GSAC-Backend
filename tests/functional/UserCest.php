@@ -1,6 +1,6 @@
 <?php
 
-class GabineteCest
+class UserCest
 {
     // Propriedades da classe para armazenar os tokens
     public $token_user_admin = "wK9DpRsBpCPjxyBTzkJ1fBU2-pbpaTyq";
